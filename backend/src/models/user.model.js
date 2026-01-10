@@ -4,13 +4,13 @@ const userSchema = new mongoose.Schema(
   {
     userName: {
       type: String,
-      required: true,
+
       trim: true,
     },
 
     phoneNumber: {
       type: String,
-      required: true,
+
       unique: true,
     },
 
@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema(
 
     email: {
       type: String,
-      required: true,
+
       unique: true,
       lowercase: true,
       match: [/^\S+@\S+\.\S+$/, "Invalid email address"],
