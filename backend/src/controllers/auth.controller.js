@@ -5,6 +5,7 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import sendOtpEmail from "../service/email.service.js";
 import { sendOtpToPhoneNumber, verifySms } from "../service/twilio.service.js";
+import generateToken from "../utils/generateToken.js";
 
 const sendOtp = asyncHandler(async (req, res) => {
   const { phoneNumber, phoneSuffix, email } = req.body;
@@ -83,6 +84,12 @@ const verifyOtp = asyncHandler(async (req, res) => {
     user.isVerified = true;
     await user.save();
   }
-  const token = j;
+  const token = generateToken(user?._id);
+  res.cookie("token", token, {
+    httpOnly: true,
+  });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "otp verified successfully !"));
 });
-export { sendOtp };
+export { sendOtp, verifyOtp };
