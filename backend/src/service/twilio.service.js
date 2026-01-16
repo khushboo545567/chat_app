@@ -1,5 +1,5 @@
 import twilio from "twilio";
-import { ApiError } from "../utils/apiError";
+import { ApiError } from "../utils/apiError.js";
 
 const accountId = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -7,35 +7,37 @@ const serviceId = process.env.TWILIO_SERVICE_SID;
 
 const client = twilio(accountId, authToken);
 
-// send otp to phone number
+// send OTP to phone number
 const sendOtpToPhoneNumber = async (phoneNumber) => {
   try {
-    console.log(phoneNumber, "this is the phone number send to the sms");
     if (!phoneNumber) {
       throw new ApiError(400, "Phone number is required");
     }
     const response = await client.verify.v2
       .services(serviceId)
       .verifications.create({ to: phoneNumber, channel: "sms" });
-    console.log("here the respnse of the sms", response);
+    console.log("SMS sent response:", response);
     return response;
   } catch (error) {
-    console.log(error);
-    throw new ApiError("failed to send sms");
+    console.error("Error sending SMS:", error);
+    throw new ApiError(500, "Failed to send SMS");
   }
 };
 
+// verify OTP
 const verifySms = async (phoneNumber, otp) => {
   try {
-    console.log("this is otp of sms", otp);
+    if (!phoneNumber || !otp) {
+      throw new ApiError(400, "Phone number and OTP are required");
+    }
     const response = await client.verify.v2
       .services(serviceId)
       .verificationChecks.create({ to: phoneNumber, code: otp });
-    console.log("here the respnse of the sms", response);
+    console.log("SMS verification response:", response);
     return response;
   } catch (error) {
-    console.log(error);
-    throw new ApiError("failed to send sms");
+    console.error("Error verifying SMS:", error);
+    throw new ApiError(500, "Failed to verify SMS");
   }
 };
 

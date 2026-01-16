@@ -11,14 +11,15 @@ const transporter = nodemailer.createTransport({
 
 transporter.verify((error, success) => {
   if (error) {
-    console.error("Gmail service connection failed ");
+    // console.error("Gmail service connection failed ");
   } else {
     console.log("email configured properly and ready to send email ");
   }
 });
 
 const sendOtpEmail = async (email, otp) => {
-  const html = `
+  try {
+    const html = `
     <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
       <h2 style="color: #075e54;">🔐 WhatsApp Web Verification</h2>
       
@@ -42,12 +43,16 @@ const sendOtpEmail = async (email, otp) => {
     </div>
   `;
 
-  await transporter.sendMail({
-    from: `chatApp web <${process.env.EMAIL_HOST}`,
-    to: email,
-    subject: "chatApp verification code",
-    html,
-  });
+    await transporter.sendMail({
+      from: `"chatApp Web" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "chatApp verification code",
+      html,
+    });
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw new Error("Failed to send OTP email");
+  }
 };
 
 export default sendOtpEmail;
