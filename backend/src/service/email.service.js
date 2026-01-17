@@ -1,8 +1,14 @@
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+dotenv.config();
+
+// Port 465 → secure: true (SSL)
+// Port 587 → secure: false (TLS / STARTTLS)
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: process.env.EMAIL_PORT,
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -11,7 +17,7 @@ const transporter = nodemailer.createTransport({
 
 transporter.verify((error, success) => {
   if (error) {
-    // console.error("Gmail service connection failed ");
+    console.error("Gmail service connection failed ");
   } else {
     console.log("email configured properly and ready to send email ");
   }

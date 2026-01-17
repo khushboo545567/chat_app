@@ -54,7 +54,6 @@ const sendOtp = asyncHandler(async (req, res) => {
 const verifyOtp = asyncHandler(async (req, res) => {
   const { phoneNumber, phoneSuffix, email, otp } = req.body;
   let user;
-
   if (!otp) {
     return res.status(400).json(new ApiError(400, "OTP is required"));
   }
@@ -62,23 +61,29 @@ const verifyOtp = asyncHandler(async (req, res) => {
   // ---------- EMAIL OTP ----------
   if (email) {
     user = await User.findOne({ email });
+
     if (!user) {
       return res.status(404).json(new ApiError(404, "User not found"));
     }
 
     const now = new Date();
+    console.log("heere the email finish ");
+
     if (
       !user.emailOtp ||
       String(user.emailOtp) !== String(otp) ||
       now > new Date(user.emailOtpExpiry)
     ) {
-      return res.status(400).json(new ApiError(400, "Invalid or expired OTP"));
+      // return res.status(400).json(new ApiError(400, "Invalid or expired OTP"));
+      throw new ApiError(400, "Invalid or expired OTP");
     }
+    console.log("heere the email finish ");
 
     user.isVerified = true;
     user.emailOtp = null;
     user.emailOtpExpiry = null;
     await user.save();
+    console.log("heere the email finish ");
 
     // ---------- PHONE OTP ----------
   } else {

@@ -6,12 +6,12 @@ dotenv.config({
 });
 
 const PORT = process.env.PORT || 5000;
-connectDB().then(() => {
-  app
-    .listen(PORT, () => {
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
       console.log("server is listening on ", PORT);
-    })
-    .catch((error) => {
-      console.log("error occurs while server is running !", error);
     });
-});
+  })
+  .catch((error) => {
+    console.log("error occurs while server is running !", error);
+  });
