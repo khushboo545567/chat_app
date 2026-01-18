@@ -30,6 +30,7 @@ const verifySms = async (phoneNumber, otp) => {
     if (!phoneNumber || !otp) {
       throw new ApiError(400, "Phone number and OTP are required");
     }
+
     const response = await client.verify.v2
       .services(serviceId)
       .verificationChecks.create({ to: phoneNumber, code: otp });

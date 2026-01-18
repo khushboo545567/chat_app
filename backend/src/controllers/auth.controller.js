@@ -74,7 +74,6 @@ const verifyOtp = asyncHandler(async (req, res) => {
       String(user.emailOtp) !== String(otp) ||
       now > new Date(user.emailOtpExpiry)
     ) {
-      // return res.status(400).json(new ApiError(400, "Invalid or expired OTP"));
       throw new ApiError(400, "Invalid or expired OTP");
     }
     console.log("heere the email finish ");
