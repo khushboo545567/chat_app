@@ -120,4 +120,12 @@ const verifyOtp = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "OTP verified successfully"));
 });
 
-export { sendOtp, verifyOtp };
+const updateProfile = asyncHandler(async (req, res) => {
+  const { userName, about, isAgreed } = req.body;
+  const userId = req.user.userid;
+
+  const user = await User.findById(userId);
+  const file = req.file;
+});
+
+export { sendOtp, verifyOtp, updateProfile };
