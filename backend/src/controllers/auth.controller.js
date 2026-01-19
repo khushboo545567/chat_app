@@ -124,12 +124,12 @@ const verifyOtp = asyncHandler(async (req, res) => {
 const updateProfile = asyncHandler(async (req, res) => {
   const { userName, about, isAgreed } = req.body;
   const userId = req.user.userId;
-  console.log("file : " + req.file);
+
   const user = await User.findById(userId);
   const file = req.file?.path;
   if (file) {
     const uploadToCloudnary = await uploadOnCloudinary(file);
-    console.log(uploadToCloudnary);
+
     user.avatar = uploadToCloudnary?.secure_url;
   }
   if (userName) user.userName = userName;
