@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  logOut,
   sendOtp,
   updateProfile,
   verifyOtp,
@@ -13,5 +14,6 @@ router.route("/verify-otp").post(verifyOtp);
 router
   .route("/update-profile")
   .put(verifyToken, upload.single("avatar"), updateProfile);
+router.route("/logout").post(logOut);
 
 export default router;

@@ -142,4 +142,15 @@ const updateProfile = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "profile updated successfully !"));
 });
 
-export { sendOtp, verifyOtp, updateProfile };
+const logOut = asyncHandler(async (req, res) => {
+  return res
+    .status(200)
+    .clearCookie("token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    })
+    .json(new ApiResponse(200, {}, "user logged out successfully !"));
+});
+
+export { sendOtp, verifyOtp, updateProfile, logOut };
