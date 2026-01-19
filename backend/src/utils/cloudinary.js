@@ -1,19 +1,23 @@
-import { ApiError } from "./apiError";
-import "../config/cloudnary.config.js";
+import cloudinary from "../config/cloudinary.config.js";
+import fs from "fs";
 
 const uploadOnCloudinary = async (localPath) => {
   try {
     if (!localPath) return null;
-    const upload = await cloudinary.uploader.upload(localPath, {
+
+    const uploadResult = await cloudinary.uploader.upload(localPath, {
       resource_type: "auto",
     });
+
+    // remove local file after upload
     if (fs.existsSync(localPath)) {
       await fs.promises.unlink(localPath);
     }
 
-    return upload;
+    return uploadResult;
   } catch (error) {
-    console.log(error);
+    console.error("Cloudinary upload error:", error);
+    return null;
   }
 };
 

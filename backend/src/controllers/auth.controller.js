@@ -109,7 +109,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
     await user.save();
   }
 
-  const token = generateToken(user._id);
+  const token = generateToken({ userId: user._id });
   res.cookie("token", token, {
     httpOnly: true,
     secure: true,
@@ -123,10 +123,10 @@ const verifyOtp = asyncHandler(async (req, res) => {
 
 const updateProfile = asyncHandler(async (req, res) => {
   const { userName, about, isAgreed } = req.body;
-  const userId = req.user.userid;
-
+  const userId = req.user.userId;
+  console.log("file : " + req.file);
   const user = await User.findById(userId);
-  const file = req.file;
+  const file = req.file?.path;
   if (file) {
     const uploadToCloudnary = await uploadOnCloudinary(file);
     console.log(uploadToCloudnary);
