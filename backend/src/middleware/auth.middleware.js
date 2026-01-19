@@ -18,7 +18,7 @@ const verifyToken = asyncHandler(async (req, res, next) => {
     throw new ApiError(400, "Unauthorized token");
   }
 
-  req.user = decodedtoken.userId;
+  req.user = decodedtoken;
 
   next();
 });

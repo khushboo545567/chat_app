@@ -6,6 +6,7 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import sendOtpEmail from "../service/email.service.js";
 import { sendOtpToPhoneNumber, verifySms } from "../service/twilio.service.js";
 import generateToken from "../utils/generateToken.js";
+import uploadOnCloudinary from "../utils/cloudinary.js";
 
 const sendOtp = asyncHandler(async (req, res) => {
   const { phoneNumber, phoneSuffix, email } = req.body;
@@ -126,6 +127,19 @@ const updateProfile = asyncHandler(async (req, res) => {
 
   const user = await User.findById(userId);
   const file = req.file;
+  if (file) {
+    const uploadToCloudnary = await uploadOnCloudinary(file);
+    console.log(uploadToCloudnary);
+    user.avatar = uploadToCloudnary?.secure_url;
+  }
+  if (userName) user.userName = userName;
+  if (about) user.about = about;
+  if (isAgreed) user.isAgreed = isAgreed;
+  await user.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "profile updated successfully !"));
 });
 
 export { sendOtp, verifyOtp, updateProfile };

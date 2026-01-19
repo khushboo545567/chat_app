@@ -1,4 +1,5 @@
 import { ApiError } from "./apiError";
+import "../config/cloudnary.config.js";
 
 const uploadOnCloudinary = async (localPath) => {
   try {
