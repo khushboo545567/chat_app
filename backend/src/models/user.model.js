@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
     phoneNumber: {
       type: String,
       unique: true,
+      sparse: true,
     },
 
     phoneSuffix: {
@@ -19,7 +20,7 @@ const userSchema = new mongoose.Schema(
 
     email: {
       type: String,
-
+      sparse: true,
       unique: true,
       lowercase: true,
       match: [/^\S+@\S+\.\S+$/, "Invalid email address"],
@@ -60,6 +61,13 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    contacts: [
+      {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        nickname: String,
+        blocked: { type: Boolean, default: false },
+      },
+    ],
   },
   { timestamps: true },
 );

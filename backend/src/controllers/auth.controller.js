@@ -7,6 +7,8 @@ import sendOtpEmail from "../service/email.service.js";
 import { sendOtpToPhoneNumber, verifySms } from "../service/twilio.service.js";
 import generateToken from "../utils/generateToken.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
+import { Message } from "../models/message.model.js";
+// import { RequestClient } from "twilio";
 
 const sendOtp = asyncHandler(async (req, res) => {
   const { phoneNumber, phoneSuffix, email } = req.body;
@@ -153,4 +155,64 @@ const logOut = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "user logged out successfully !"));
 });
 
-export { sendOtp, verifyOtp, updateProfile, logOut };
+// get the connected users profile
+const getUserContacts = asyncHandler(async (req, res) => {
+  const userId = req.user.userId;
+
+  // 1. Get user with contacts
+  const user = await User.findById(userId)
+    .populate("contacts.user", "userName avatar isOnline lastSeen")
+    .lean();
+
+  if (!user) {
+    return res.status(404).json(new ApiError(404, "User not found"));
+  }
+
+  // 2. Process contacts
+  const contactsWithLastMsg = await Promise.all(
+    user.contacts.map(async (contact) => {
+      const contactId = contact.user._id;
+
+      // 3. Find chatroom between users
+      const room = await Chatroom.findOne({
+        participants: { $all: [userId, contactId] },
+        isGroup: false,
+      })
+        .populate({
+          path: "lastMessage",
+          select: "content messageType sender status createdAt",
+        })
+        .lean();
+
+      return {
+        _id: contact.user._id,
+        userName: contact.user.userName,
+        avatar: contact.user.avatar,
+        isOnline: contact.user.isOnline,
+        lastSeen: contact.user.lastSeen,
+        blocked: contact.blocked,
+        lastMessage: room?.lastMessage
+          ? {
+              content: room.lastMessage.content,
+              messageType: room.lastMessage.messageType,
+              sender: room.lastMessage.sender,
+              status: room.lastMessage.status,
+              time: room.lastMessage.createdAt,
+            }
+          : null,
+      };
+    }),
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        contactsWithLastMsg,
+        "Contacts fetched successfully",
+      ),
+    );
+});
+
+export { sendOtp, verifyOtp, updateProfile, logOut, getUserContacts };
