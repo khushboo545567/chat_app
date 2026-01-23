@@ -227,4 +227,4 @@ const deleteMsg = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Message deleted successfully"));
 });
 
-export { messageSend, getMessages, markAsRead, deleteMsg };
+export { messageSend, getMessages, markAsRead, deleteMsg, getConversation };

@@ -27,5 +27,6 @@ const statusSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+statusSchema.index({ expireDate: 1 }, { expireAfterSeconds: 0 });
 
 export const Status = mongoose.model("Status", statusSchema);
