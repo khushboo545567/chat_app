@@ -13,10 +13,17 @@ const messageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-
+    receiver: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     content: {
       type: String,
       required: true,
+    },
+    imageOrVideoUrl: {
+      type: String,
     },
 
     messageType: {
@@ -38,7 +45,7 @@ const messageSchema = new mongoose.Schema(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const Message = mongoose.model("Message", messageSchema);

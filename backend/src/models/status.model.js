@@ -12,15 +12,20 @@ const statusSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-
+    contentType: {
+      type: String,
+      enum: ["text", "image", "video"],
+      default: "text",
+    },
     viewers: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
     ],
+    expireDate: { type: Date, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const Status = mongoose.model("Status", statusSchema);
