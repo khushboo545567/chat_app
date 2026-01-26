@@ -5,8 +5,10 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import { Message } from "../models/message.model.js";
 import { Chatroom } from "../models/chatroom.model.js";
 
+// send message to the receiver
 const messageSend = asyncHandler(async (req, res) => {
-  const { senderId, receiverId, content, roomId } = req.body;
+  const senderId = req.user.userId;
+  const { receiverId, content, roomId } = req.body;
 
   if (!senderId || !receiverId || !roomId) {
     throw new ApiError(400, "senderId, receiverId and roomId are required");
@@ -91,6 +93,7 @@ const messageSend = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, populatedMessage, "Message sent successfully"));
 });
 
+// fetches all chatrooms where the user is a participant
 const getConversation = asyncHandler(async (req, res) => {
   const userId = req.user.userId;
 
@@ -149,7 +152,7 @@ const getMessages = asyncHandler(async (req, res) => {
     throw new ApiError(400, "receiverId is required");
   }
 
-  // 1️⃣ Find chatroom between users
+  //  Find chatroom between users
   const chatroom = await Chatroom.findOne({
     isGroup: false,
     participants: { $all: [userId, receiverId] },
@@ -159,7 +162,7 @@ const getMessages = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Chat does not exist");
   }
 
-  // 2️⃣ Fetch messages of that room
+  //  Fetch messages of that room
   const messages = await Message.find({ roomId: chatroom._id })
     .populate("sender", "userName avatar")
     .populate("receiver", "userName avatar")
