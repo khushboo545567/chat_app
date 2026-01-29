@@ -1,9 +1,9 @@
-import { Status } from "../models/status.model";
-import { ApiError } from "../utils/apiError";
-import { ApiResponse } from "../utils/apiResponse";
-import asyncHandler from "../utils/asyncHandler";
-import uploadOnCloudinary from "../utils/cloudinary";
-import { User } from "../models/user.model";
+import { Status } from "../models/status.model.js";
+import { ApiError } from "../utils/apiError.js";
+import { ApiResponse } from "../utils/apiResponse.js";
+import asyncHandler from "../utils/asyncHandler.js";
+import uploadOnCloudinary from "../utils/cloudinary.js";
+import { User } from "../models/user.model.js";
 
 const createStatus = asyncHandler(async (req, res) => {
   const { content } = req.body;
