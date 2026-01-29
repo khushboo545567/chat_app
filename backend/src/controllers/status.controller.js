@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError";
 import { ApiResponse } from "../utils/apiResponse";
 import asyncHandler from "../utils/asyncHandler";
 import uploadOnCloudinary from "../utils/cloudinary";
+import { User } from "../models/user.model";
 
 const createStatus = asyncHandler(async (req, res) => {
   const { content } = req.body;
@@ -140,4 +141,4 @@ const getStatus = asyncHandler(async (req, res) => {
     );
 });
 
-export { createStatus, deleteStatus };
+export { createStatus, deleteStatus, viewedStatus, getStatus };

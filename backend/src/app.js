@@ -41,6 +41,8 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import authroute from "./routes/auth.routes.js";
 import errorHandler from "./middleware/error.middleware.js";
+import messageRoute from "./routes/message.routes.js";
+import statusRoute from "./routes/status.routes.js";
 
 const app = express();
 
@@ -59,6 +61,8 @@ app.use(cookieParser());
 
 // ROUTES
 app.use("/api/v1/auth", authroute);
+app.use("/api/v1/message", messageRoute);
+app.use("/api/v1/status", statusRoute);
 
 // ERROR HANDLER
 app.use(errorHandler);
