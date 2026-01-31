@@ -4,6 +4,7 @@ import uploadOnCloudinary from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { Message } from "../models/message.model.js";
 import { Chatroom } from "../models/chatroom.model.js";
+import mongoose from "mongoose";
 
 // send message to the receiver
 const messageSend = asyncHandler(async (req, res) => {
