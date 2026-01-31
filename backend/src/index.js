@@ -14,6 +14,13 @@ const server = http.createServer(app);
 // INITIALIZE SOCKET WITH SAME SERVER
 const io = inilizeSocket(server);
 
+// to access io in diffrent files
+app.use((req, res, next) => {
+  req.io = io;
+  req.socketUserMap = socketUserMap;
+  next();
+});
+
 // OPTIONAL: make io accessible in app
 app.set("io", io);
 

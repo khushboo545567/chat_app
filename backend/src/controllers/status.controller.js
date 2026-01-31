@@ -38,6 +38,8 @@ const createStatus = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Status content or file is required!");
   }
 
+  // emit socket
+
   return res
     .status(200)
     .json(new ApiResponse(200, status, "Status created successfully!"));
