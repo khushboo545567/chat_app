@@ -10,7 +10,7 @@ const messageSend = asyncHandler(async (req, res) => {
   const senderId = req.user.userId;
   const { receiverId, content, roomId } = req.body;
 
-  if (!senderId || !receiverId || !roomId) {
+  if (!senderId || !receiverId) {
     throw new ApiError(400, "senderId, receiverId and roomId are required");
   }
 
@@ -68,7 +68,7 @@ const messageSend = asyncHandler(async (req, res) => {
   }
 
   const message = await Message.create({
-    roomId,
+    roomId: chatroom._id,
     sender: senderId,
     receiver: receiverId,
     content: content || "",

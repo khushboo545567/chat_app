@@ -11,10 +11,10 @@ import {
 const router = Router();
 
 router
-  .route("/send_msg")
+  .route("/send-msg")
   .post(verifyToken, upload.single("image"), messageSend);
-router.route("/get_conversation").get(verifyToken, getConversation);
-router.route("/get_messages/:receiverId").get(verifyToken, getMessages);
+router.route("/get-conversation").get(verifyToken, getConversation);
+router.route("/get-messages/:receiverId").get(verifyToken, getMessages);
 router.route("/mark_as_read/:roomId").get(verifyToken, markAsRead);
 router.route("/delete_message/:messageId").delete(verifyToken, deleteMsg);
 

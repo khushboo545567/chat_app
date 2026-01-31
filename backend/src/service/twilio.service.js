@@ -1,5 +1,7 @@
 import twilio from "twilio";
 import { ApiError } from "../utils/apiError.js";
+import dotenv from "dotenv";
+dotenv.config({ path: "./.env" });
 
 const accountId = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -30,7 +32,8 @@ const verifySms = async (phoneNumber, otp) => {
     if (!phoneNumber || !otp) {
       throw new ApiError(400, "Phone number and OTP are required");
     }
-
+    console.log(phoneNumber);
+    console.log(otp);
     const response = await client.verify.v2
       .services(serviceId)
       .verificationChecks.create({ to: phoneNumber, code: otp });
