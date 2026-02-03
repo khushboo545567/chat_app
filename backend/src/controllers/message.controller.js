@@ -86,8 +86,25 @@ const messageSend = asyncHandler(async (req, res) => {
     .populate("sender", "username avatar")
     .populate("receiver", "username avatar");
 
-  // 🔌 SOCKET.IO PART (to be implemented)
-  // io.to(roomId).emit("newMessage", populatedMessage);
+  // 🔌🔌 SOCKET.IO PART
+
+  const populatedStatus = await Status.findOne(status?._id)
+    .populate("user", "userName avatar")
+    .populate("viewers", "userName avatar");
+
+  const userData = await User.findById(userId).select("contacts.user");
+
+  if (req.io && req.socketUserMap) {
+    for (const contact of userData.contacts) {
+      const contactUserId = contact.user.toString();
+
+      const socketId = req.socketUserMap.get(contactUserId);
+
+      if (socketId) {
+        req.io.to(socketId).emit("new_status", populatedStatus);
+      }
+    }
+  }
 
   return res
     .status(200)

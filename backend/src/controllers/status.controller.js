@@ -38,7 +38,24 @@ const createStatus = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Status content or file is required!");
   }
 
-  // emit socket
+  // 🔌 emit socket
+  const populatedStatus = await Status.findOne(status?._id)
+    .populate("user", "userName avatar")
+    .populate("viewers", "userName avatar");
+
+  const userData = await User.findById(userId).select("contacts.user");
+
+  if (req.io && req.socketUserMap) {
+    for (const contact of userData.contacts) {
+      const contactUserId = contact.user.toString();
+
+      const socketId = req.socketUserMap.get(contactUserId);
+
+      if (socketId) {
+        req.io.to(socketId).emit("new_status", populatedStatus);
+      }
+    }
+  }
 
   return res
     .status(200)
@@ -60,6 +77,23 @@ const deleteStatus = asyncHandler(async (req, res) => {
 
   await status.deleteOne();
 
+  // 🔌 Emit socket event to contacts
+  const userData = await User.findById(userId).select("contacts.user");
+
+  if (req.io && req.socketUserMap) {
+    for (const contact of userData.contacts) {
+      const contactUserId = contact.user.toString();
+      const socketId = req.socketUserMap.get(contactUserId);
+
+      if (socketId) {
+        req.io.to(socketId).emit("status_deleted", {
+          statusId,
+          deletedBy: userId,
+        });
+      }
+    }
+  }
+
   return res
     .status(200)
     .json(new ApiResponse(200, {}, "Status deleted successfully"));
@@ -79,8 +113,17 @@ const viewedStatus = asyncHandler(async (req, res) => {
     status.viewers.push(userId);
     await status.save();
 
-    // 🔌 optional: notify owner via socket.io
-    // io.to(status.createdBy.toString()).emit("statusViewed", { statusId, viewerId: userId });
+    // 🔌 notify status owner
+    if (req.io && req.socketUserMap) {
+      const ownerSocketId = req.socketUserMap.get(status.createdBy.toString());
+
+      if (ownerSocketId) {
+        req.io.to(ownerSocketId).emit("status_viewed", {
+          statusId,
+          viewerId: userId,
+        });
+      }
+    }
   }
 
   return res

@@ -17,12 +17,12 @@ const io = inilizeSocket(server);
 // to access io in diffrent files
 app.use((req, res, next) => {
   req.io = io;
-  req.socketUserMap = socketUserMap;
+  req.socketUserMap = io.socketUserMap;
   next();
 });
 
 // OPTIONAL: make io accessible in app
-app.set("io", io);
+// app.set("io", io);
 
 connectDB()
   .then(() => {
