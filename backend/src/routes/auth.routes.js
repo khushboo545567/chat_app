@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   getUserContacts,
+  getUserProfile,
   logOut,
   sendOtp,
   updateProfile,
@@ -20,8 +21,10 @@ router
   .route("/update-profile")
   .put(verifyToken, upload.single("avatar"), updateProfile);
 
-router.route("/logout").post(logOut);
+router.route("/logout").get(logOut);
 
 router.route("/get-users").get(verifyToken, getUserContacts);
+
+router.route("/get-user-profile").get(verifyToken, getUserProfile);
 
 export default router;

@@ -155,6 +155,17 @@ const logOut = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "user logged out successfully !"));
 });
 
+// get user profile
+const getUserProfile = asyncHandler(async (req, res) => {
+  const userId = req.user.userId;
+  const user = await User.findById(userId)
+    .select("-emailOtp -emailOtpExpiry -contacts -lastSeen -isOnline")
+    .lean();
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "user profile fetched successfully "));
+});
+
 // get the connected users profile
 const getUserContacts = asyncHandler(async (req, res) => {
   const userId = req.user.userId;
@@ -215,4 +226,11 @@ const getUserContacts = asyncHandler(async (req, res) => {
     );
 });
 
-export { sendOtp, verifyOtp, updateProfile, logOut, getUserContacts };
+export {
+  sendOtp,
+  verifyOtp,
+  updateProfile,
+  logOut,
+  getUserContacts,
+  getUserProfile,
+};
