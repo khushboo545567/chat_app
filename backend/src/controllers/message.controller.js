@@ -86,23 +86,14 @@ const messageSend = asyncHandler(async (req, res) => {
     .populate("sender", "username avatar")
     .populate("receiver", "username avatar");
 
-  // 🔌🔌 SOCKET.IO PART
-
-  const populatedStatus = await Status.findOne(status?._id)
-    .populate("user", "userName avatar")
-    .populate("viewers", "userName avatar");
-
-  const userData = await User.findById(userId).select("contacts.user");
-
+  // 🔌 SOCKET.IO PART
   if (req.io && req.socketUserMap) {
-    for (const contact of userData.contacts) {
-      const contactUserId = contact.user.toString();
+    const receiverSocketId = req.socketUserMap.get(receiverId);
 
-      const socketId = req.socketUserMap.get(contactUserId);
-
-      if (socketId) {
-        req.io.to(socketId).emit("new_status", populatedStatus);
-      }
+    if (receiverSocketId) {
+      req.io.to(receiverSocketId).emit("new_message", populatedMessage);
+      message.status = "delivered";
+      await message.save();
     }
   }
 
@@ -211,6 +202,29 @@ const markAsRead = asyncHandler(async (req, res) => {
     },
   );
 
+  // 🔌 SOCKET.IO PART
+  const chatroom = await Chatroom.findById(roomId).select("participants");
+
+  if (!chatroom) {
+    throw new ApiError(404, "Chatroom not found");
+  }
+
+  // Notify OTHER user(s)
+  if (req.io && req.socketUserMap) {
+    for (const participantId of chatroom.participants) {
+      if (participantId.toString() !== userId) {
+        const socketId = req.socketUserMap.get(participantId.toString());
+
+        if (socketId) {
+          req.io.to(socketId).emit("messages_read", {
+            roomId,
+            readBy: userId,
+          });
+        }
+      }
+    }
+  }
+
   return res
     .status(200)
     .json(new ApiResponse(200, result, "Messages marked as read"));
@@ -237,11 +251,18 @@ const deleteMsg = asyncHandler(async (req, res) => {
 
   await msg.deleteOne();
 
-  // 🔌 SOCKET.IO (optional)
-  // io.to(msg.roomId.toString()).emit("messageDeleted", {
-  //   messageId,
-  //   roomId: msg.roomId,
-  // });
+  // 🔌 SOCKET.IO
+  if (req.io && req.socketUserMap) {
+    const receiverSocketId = req.socketUserMap.get(msg.receiver.toString());
+
+    if (receiverSocketId) {
+      req.io.to(receiverSocketId).emit("message_deleted", {
+        messageId,
+        roomId: msg.roomId,
+        deletedBy: userId,
+      });
+    }
+  }
 
   return res
     .status(200)
