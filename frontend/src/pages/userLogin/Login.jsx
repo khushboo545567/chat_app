@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import useUserStore from "../../store/useUserStore.js";
 import { useForm } from "react-hook-form";
 import useThemeStore from "../../store/useThemeStore.js";
+import { motion } from "framer-motion";
+import { FaWhatsapp } from "react-icons/fa";
 
 // // ================= VALIDATIONS =================
 
@@ -82,6 +84,17 @@ function Login() {
   } = useForm({ resolver: yupResolver(profileValidationSchema) });
   const { theme, toggleTheme } = useThemeStore();
 
+  const progressBar = () => {
+    <div
+      className={`w-full  ${theme === "dark" ? "bg-gray-700" : "bg-gray-200"} rounded-full h-2.5 mb-6`}
+    >
+      <div
+        className="bg-green-500 h-2.5 rounded-full transition-all duration-500 ease-in-out"
+        style={{ width: `${(step / 3) * 100}%` }}
+      ></div>
+    </div>;
+  };
+
   return (
     <div
       className={`min-h-screen ${
@@ -90,7 +103,32 @@ function Login() {
           : "bg-linear-to-br from-green-400 to-blue-400"
       } flex items-center justify-center p-4 overflow-hidden`}
     >
-      Login
+      <motion.div
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className={`${theme === "dark" ? "bg-gray-800 text-white" : "bg-white"} p-6 md:p-8 rounded-lg shadow-2xl w-full max-w-md relative z-10`}
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{
+            duration: 0.2,
+            type: "spring",
+            stiffness: 260,
+            damping: 20,
+          }}
+          className="w-24 h-24 bg-green-500 rounded-full mx-auto mb-6 flex items-center justify-center "
+        >
+          <FaWhatsapp className="w-16 h-16 text-white"></FaWhatsapp>
+        </motion.div>
+        <h1
+          className={`text-3xl font-bold text-center mb-6 ${theme === "dark" ? "text-white" : "text-gray-800"}`}
+        >
+          Whatsapp Login
+        </h1>
+        <progressBar />
+      </motion.div>
     </div>
   );
 }
