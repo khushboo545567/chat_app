@@ -80,8 +80,19 @@ function Login() {
     handleSubmit: handleProfileSubmit,
     formState: { errors: profileErrors },
   } = useForm({ resolver: yupResolver(profileValidationSchema) });
+  const { theme, toggleTheme } = useThemeStore();
 
-  return <div className="dark:bg-amber-300 bg-red-400">Login</div>;
+  return (
+    <div
+      className={`min-h-screen ${
+        theme === "dark"
+          ? "bg-gray-900"
+          : "bg-linear-to-br from-green-400 to-blue-400"
+      } flex items-center justify-center p-4 overflow-hidden`}
+    >
+      Login
+    </div>
+  );
 }
 
 export default Login;
