@@ -2,18 +2,21 @@ import React, { useState } from "react";
 import useLoginStore from "../../store/useLoginStore.js";
 import countries from "../../utils/Countries.js";
 import * as yup from "yup";
-import { yupResolver } from "@hookform/resolvers";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useNavigate } from "react-router-dom";
 import useUserStore from "../../store/useUserStore.js";
 import { useForm } from "react-hook-form";
+import useThemeStore from "../../store/useThemeStore.js";
 
-// validate
+// // ================= VALIDATIONS =================
+
 const loginValidationSchema = yup
   .object()
   .shape({
     phoneNumber: yup
       .string()
       .nullable()
-      .matches(/^\d+$/, "Phone number be digit")
+      .matches(/^\d+$/, "Phone number must contain only digits")
       .transform((value, originalValue) => {
         originalValue.trim() === "" ? null : value;
       }),
@@ -45,6 +48,8 @@ const profileValidationSchema = yup.object().shape({
   aggred: yup.bool().oneOf([true], "you must aggree to the terms"),
 });
 
+// // ================= COMPONENT =================
+
 function Login() {
   const { step, userPhoneData, setStep, setUserPhoneData, resetLoginState } =
     useLoginStore();
@@ -55,28 +60,28 @@ function Login() {
   const [avatar, setAvatar] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
   const [error, setError] = useState("");
-  const navigate = useNavigation();
+  const navigate = useNavigate();
   const { setUser } = useUserStore();
 
   const {
     register: loginRegister,
     handleSubmit: handleLoginSubmit,
-    fromState: { errors: loginErrors },
+    formState: { errors: loginErrors },
   } = useForm({ resolver: yupResolver(loginValidationSchema) });
 
   const {
     handleSubmit: handleOtpSubmit,
-    fromState: { errors: otpErrors },
+    formState: { errors: otpErrors },
     setValue: setOtpValue,
   } = useForm({ resolver: yupResolver(otpValidationSchema) });
 
   const {
     register: profileRegister,
     handleSubmit: handleProfileSubmit,
-    fromState: { errors: profileErrors },
+    formState: { errors: profileErrors },
   } = useForm({ resolver: yupResolver(profileValidationSchema) });
 
-  return <div>Login</div>;
+  return <div className="dark:bg-amber-300 bg-red-400">Login</div>;
 }
 
 export default Login;
