@@ -9,7 +9,7 @@ const useUserStore = create(
       setUser: (userData) => set({ user: userData, isAuthenticated: true }),
       clearUser: () => set({ user: null, isAuthenticated: false }),
     }),
-    { name: "login-storage", getStorage: () => localStorage },
+    { name: "user-storage", getStorage: () => localStorage },
   ),
 );
 
