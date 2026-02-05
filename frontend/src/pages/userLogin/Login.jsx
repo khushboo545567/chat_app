@@ -3,14 +3,19 @@ import useLoginStore from "../../store/useLoginStore.js";
 import countries from "../../utils/Countries.js";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useNavigate } from "react-router-dom";
+import { data, useNavigate } from "react-router-dom";
 import useUserStore from "../../store/useUserStore.js";
 import { useForm } from "react-hook-form";
 import useThemeStore from "../../store/useThemeStore.js";
 import { motion } from "framer-motion";
 import { FaChevronDown, FaUser, FaWhatsapp } from "react-icons/fa";
 import Spinner from "../../utils/Spinner";
-
+import {
+  sendOtp,
+  updateProfile,
+  verifyOtp,
+} from "../../services/user.service.js";
+import { toast } from "react-toastify";
 // // ================= VALIDATIONS =================
 
 const loginValidationSchema = yup
@@ -106,6 +111,101 @@ function Login() {
       country.name.toLowerCase().includes(searchTerm.toLocaleLowerCase()) ||
       country.dialCode.includes(searchTerm),
   );
+
+  const onLoadingSubmit = async () => {
+    try {
+      setLoading(true);
+      if (email) {
+        const response = await sendOtp(null, null, email);
+        if (response.status === "success") {
+          toast.info("OTP send to your email");
+          setUserPhoneData({ email });
+          setStep(2);
+        }
+      } else {
+        const response = await sendOtp(phoneNumber, selectedCountry.dialCode);
+        if (response.status === "success") {
+          toast.info("OTP send to your phone number");
+          setUserPhoneData({
+            phoneNumber,
+            phoneSuffix: selectedCountry.dialCode,
+          });
+          setStep(2);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+      setError(error.message || "Filed to send OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onOtpSubmit = async () => {
+    try {
+      setLoading(true);
+      if (!userPhoneData) {
+        throw new Error("Phone or email data is missing");
+      }
+      const otpString = opt.join();
+      let response;
+      if (userPhoneData?.email) {
+        response = await verifyOtp(null, null, otp, userPhoneData.email);
+      } else {
+        response = await verifyOtp(
+          userPhoneData.phoneNumber,
+          userPhoneData.phoneSuffix,
+          otpString,
+        );
+      }
+      if (response.status === "success") {
+        toast.success("OTP verified successfully ");
+        const user = response.data?.user;
+        if (user?.username && user?.avatar) {
+          setUser(user);
+          toast.success("Welcome back to Whatshapp");
+          navigate("/");
+          resetLoginState();
+        }
+      } else {
+        setStep(3);
+      }
+    } catch (error) {
+      console.log(error);
+      setError(error.message || "Filed to verify OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /////////////
+  const handleChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatar(URL.createObjectURL(file));
+    }
+  };
+  const onProfileSubmit = async () => {
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("username", data.username);
+      formData.append("aggred", data.aggred);
+      if (avatarFile) {
+        formData.append("avatar", avatarFile);
+      }
+      await updateProfile(formData);
+      toast.success("Welcome back to Whatsapp");
+      navigate("/");
+      resetLoginState();
+    } catch (error) {
+      console.log(error);
+      setError(error.message || "Filed to update user profile");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -228,7 +328,7 @@ function Login() {
               <input
                 type="email"
                 {...loginRegister("email")}
-                placeholder="Email"
+                placeholder="Email (Optional)"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={`w-2/3 px-4 py-2 outline-none ${theme === "dark" ? " text-white" : "text-black "} ${loginErrors.email ? "border-red-500" : ""}`}
