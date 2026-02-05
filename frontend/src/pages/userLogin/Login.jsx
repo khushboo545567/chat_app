@@ -8,7 +8,8 @@ import useUserStore from "../../store/useUserStore.js";
 import { useForm } from "react-hook-form";
 import useThemeStore from "../../store/useThemeStore.js";
 import { motion } from "framer-motion";
-import { FaWhatsapp } from "react-icons/fa";
+import { FaChevronDown, FaUser, FaWhatsapp } from "react-icons/fa";
+import Spinner from "../../utils/Spinner";
 
 // // ================= VALIDATIONS =================
 
@@ -64,6 +65,9 @@ function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { setUser } = useUserStore();
+  const [showDropDown, setDropDown] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const {
     register: loginRegister,
@@ -84,16 +88,24 @@ function Login() {
   } = useForm({ resolver: yupResolver(profileValidationSchema) });
   const { theme, toggleTheme } = useThemeStore();
 
-  const progressBar = () => {
-    <div
-      className={`w-full  ${theme === "dark" ? "bg-gray-700" : "bg-gray-200"} rounded-full h-2.5 mb-6`}
-    >
+  const ProgressBar = () => {
+    return (
       <div
-        className="bg-green-500 h-2.5 rounded-full transition-all duration-500 ease-in-out"
-        style={{ width: `${(step / 3) * 100}%` }}
-      ></div>
-    </div>;
+        className={`w-full  ${theme === "dark" ? "bg-gray-700" : "bg-gray-200"} rounded-full h-2.5 mb-6`}
+      >
+        <div
+          className="bg-green-500 h-2.5 rounded-full transition-all duration-500 ease-in-out"
+          style={{ width: `${(step / 3) * 100}%` }}
+        ></div>
+      </div>
+    );
   };
+
+  const filterContires = countries.filter(
+    (country) =>
+      country.name.toLowerCase().includes(searchTerm.toLocaleLowerCase()) ||
+      country.dialCode.includes(searchTerm),
+  );
 
   return (
     <div
@@ -127,7 +139,114 @@ function Login() {
         >
           Whatsapp Login
         </h1>
-        <progressBar />
+        {/* // not appearing */}
+        <ProgressBar />
+
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        {step === 1 && (
+          <form className="space-y-4">
+            <p
+              className={`text-center ${theme === "dark" ? "text-gray-300" : "text-gray-600"} mb-6`}
+            >
+              Enter you phone nubmer to receive OTP
+            </p>
+            <div className="relative">
+              <div className="flex">
+                <div className="relative w-1/3 mr-4">
+                  <button
+                    type="button"
+                    className={`flex items-center justify-between gap-2 w-full px-4 py-2 text-sm font-medium${theme === "dark" ? "text-white bg-gray-700 border-gray-600" : "text-gray-900 bg-gray-100 border-gray-300"}border rounded-lg hover:bg-gray-200 focus:outline-none`}
+                    onClick={() => setDropDown(!showDropDown)}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="text-lg">{selectedCountry.flag}</span>
+                      <span>{selectedCountry.dialCode}</span>
+                    </span>
+
+                    <FaChevronDown className="text-xs" />
+                  </button>
+                  {showDropDown && (
+                    <div
+                      className={`absolute z-10 w-full mt-1 ${theme === "dark" ? "bg-gray-700 border-gray-600 " : "bg-white border-gray-300"} border rounded-md  shadow-lg max-h-60 overflow-auto`}
+                    >
+                      <div
+                        className={`sticky top-0 ${theme === "dark" ? "bg-gray-700 " : "bg-white "} p-2`}
+                      >
+                        <input
+                          type="text"
+                          placeholder="search countires"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className={`w-full px-2 py-1 border ${theme === "dark" ? "bg-gray-600 border-gray-500 text-white" : "bg-white border-gray-300"} rounded-md text-sm focus:outline-none focus: ring-2 focus: ring-green-500`}
+                        />
+                      </div>
+                      {filterContires.map((country) => (
+                        <button
+                          key={country.alpha2}
+                          type="boutton"
+                          className={`w-full text-left px-3 py-2 ${theme === "dark" ? "hover:bg-gray-600" : "hover:bg-gray-100"} focus: outline-none focus:bg-gray-100`}
+                          onClick={() => {
+                            setSelectedCountry(country);
+                            setDropDown(false);
+                          }}
+                        >
+                          {country.flag} ({country.dialCode}) {country.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  {...loginRegister("phoneNumber")}
+                  placeholder="Phone number"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className={`w-2/3 px-4 py-2 border ${theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 "} rounded-md focus:outline-none focus: ring-2 focus: ring-green-500 ${loginErrors.phoneNumber ? "border-red-500" : ""}`}
+                />
+              </div>
+              {loginErrors.phoneNumber && (
+                <p className="text-red-500 text-sm">
+                  {loginErrors.phoneNumber.message}
+                </p>
+              )}
+            </div>
+
+            {/* EMAIL */}
+            <div className="flex items-center my-4">
+              <div className="grow h-px bg-gray-300" />
+              <span className="mx-3 text-gray-500 text-sm font-medium">Or</span>
+              <div className="grow h-px bg-gray-300" />
+            </div>
+            {/* EMAIL INPUT BOX */}
+            <div
+              className={`flex  items-center border rounded-md px-3 py-2 ${theme === "dark" ? "bg-gray-700 border-gray-600 " : "bg-white border-gray-300"}`}
+            >
+              <FaUser
+                className={`mr-2 text-gray-400 ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}
+              />
+              <input
+                type="email"
+                {...loginRegister("email")}
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={`w-2/3 px-4 py-2 outline-none ${theme === "dark" ? " text-white" : "text-black "} ${loginErrors.email ? "border-red-500" : ""}`}
+              />
+              {loginErrors.email && (
+                <p className="text-red-500 text-sm">
+                  {loginErrors.email.message}
+                </p>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition"
+            >
+              {loading ? <Spinner /> : " Send OTP"}
+            </button>
+          </form>
+        )}
       </motion.div>
     </div>
   );
