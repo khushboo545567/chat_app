@@ -1,14 +1,20 @@
-import React, { useState } from "react";
+import React, { Profiler, useState } from "react";
 import useLoginStore from "../../store/useLoginStore.js";
 import countries from "../../utils/Countries.js";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { data, useNavigate } from "react-router-dom";
 import useUserStore from "../../store/useUserStore.js";
-import { useForm } from "react-hook-form";
+import { useForm, Watch } from "react-hook-form";
 import useThemeStore from "../../store/useThemeStore.js";
 import { motion } from "framer-motion";
-import { FaArrowLeft, FaChevronDown, FaUser, FaWhatsapp } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaChevronDown,
+  FaPlus,
+  FaUser,
+  FaWhatsapp,
+} from "react-icons/fa";
 import Spinner from "../../utils/Spinner";
 import {
   sendOtp,
@@ -75,6 +81,8 @@ function Login() {
   const [showDropDown, setDropDown] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
+  let defaultAvtar =
+    "https://media.istockphoto.com/id/1477583639/vector/user-profile-icon-vector-avatar-or-person-icon-profile-picture-portrait-symbol-vector.jpg?s=612x612&w=0&k=20&c=OWGIPPkZIWLPvnQS14ZSyHMoGtVTn1zS8cAgLy1Uh24=";
 
   const {
     register: loginRegister,
@@ -192,7 +200,7 @@ function Login() {
   };
 
   /////////////
-  const handleChange = (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setAvatarFile(file);
@@ -419,6 +427,79 @@ function Login() {
             >
               <FaArrowLeft className="mr-2" />
               Wrong Number ? Go Back
+            </button>
+          </form>
+        )}
+        {step === 3 && (
+          <form
+            onSubmit={handleProfileSubmit(onProfileSubmit)}
+            className="space-y-4"
+          >
+            <div className="flex flex-col items-center mb-4">
+              <div className=" relative w-24 h-24 mb-2">
+                <img
+                  src={avatar || defaultAvtar}
+                  alt="profile"
+                  className="w-full h-full rounded-full object-cover"
+                />
+                <label
+                  htmlFor="profile-picture"
+                  className="absolute bottom-0 right-0 bg-green-500 text-white p-2 rounded-full cursor-pointer hover:bg-green-600 transition duration-300"
+                >
+                  <FaPlus className="w-4 h-4" />
+                </label>
+                <input
+                  type=" file"
+                  id="profile-picture"
+                  accept="images/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+            </div>
+            <div className="relative">
+              <FaUser
+                className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme === "dark" ? "text-gray-100" : "text-gray-400"}`}
+              />
+              <input
+                {...profileRegister("username")}
+                type="text"
+                placeholder="Username"
+                className={`w-full pl-10 pr-3 py-2 border ${theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300"} rounded-md focus:outline-nome focus:ring-2 focus:ring-green-500 text-lg`}
+              />
+              {profileErrors.username && (
+                <p className="text-red-500 text-sm mt-1">
+                  {profileErrors.username.message}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                {...profileRegister("aggred")}
+                type="checkbox"
+                className={`rounded ${theme === "dark" ? "text-green-500 bg-gray-700" : " text-green-500"} focus:ring-green-500`}
+              />
+              <label
+                htmlFor="terms"
+                className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}
+              >
+                I aggree to the{" "}
+                <a href="#" className=" text-red-500 hover:underline">
+                  Terms and conditions
+                </a>
+              </label>
+            </div>
+            {profileErrors.aggred && (
+              <p className="text-red-500 text-sm mt-1">
+                {profileErrors.username.message}
+              </p>
+            )}
+            <button
+              type="submit"
+              // disabled={!Watch("aggred") || loading}
+              className={`w-full bg-green-500 text-white font-bold py-3 px-4 rounded-md transition duration-300 ease-in-out transform hover:scale-105 items-center justify-center text-lg ${loading ? "opacity-50 cursor-not-allowed" : " "}`}
+            >
+              {loading ? <Spinner /> : " create profile"}
             </button>
           </form>
         )}
