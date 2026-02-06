@@ -114,46 +114,11 @@ function Login() {
       country.dialCode.includes(searchTerm),
   );
 
-  // const onLoadingSubmit = async () => {
-  //   try {
-  //     setLoading(true);
-  //     if (email) {
-  //       const response = await sendOtp(null, null, email);
-  //       if (response.status === "success") {
-  //         toast.info("OTP send to your email");
-  //         setUserPhoneData({ email });
-  //         setStep(2);
-  //       }
-  //     } else {
-  //       const response = await sendOtp(
-  //         phoneNumber,
-  //         selectedCountry.dialCode,
-  //         null,
-  //       );
-  //       if (response.status === "success") {
-  //         toast.success("OTP send to your phone number");
-  //         setUserPhoneData({
-  //           phoneNumber,
-  //           phoneSuffix: selectedCountry.dialCode,
-  //         });
-  //         setStep(2);
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //     setError(error.message || "Filed to send OTP");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const onLoadingSubmit = async (formData) => {
     try {
       setLoading(true);
 
       const { phoneNumber, email } = formData;
-
-      console.log("FORM DATA:", formData);
 
       let response;
 
@@ -165,13 +130,16 @@ function Login() {
 
       console.log("OTP RESPONSE:", response);
 
-      if (response?.status === "success") {
-        toast.success("OTP sent successfully");
+      if (response?.success) {
+        toast.success(response.message);
 
         setUserPhoneData(
           email
             ? { email }
-            : { phoneNumber, phoneSuffix: selectedCountry.dialCode },
+            : {
+                phoneNumber,
+                phoneSuffix: selectedCountry.dialCode,
+              },
         );
 
         setStep(2);
