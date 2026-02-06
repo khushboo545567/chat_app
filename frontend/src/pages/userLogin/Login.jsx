@@ -162,11 +162,12 @@ function Login() {
 
       let response;
       if (userPhoneData?.email) {
-        response = await verifyOtp(null, null, otp, userPhoneData.email);
+        response = await verifyOtp(null, null, userPhoneData.email, otp);
       } else {
         response = await verifyOtp(
           userPhoneData.phoneNumber,
           userPhoneData.phoneSuffix,
+          null,
           otpString,
         );
       }
