@@ -7,6 +7,7 @@ const sendOtp = async (phoneNumber, phoneSuffix, email) => {
       phoneSuffix,
       email,
     });
+
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error.message;

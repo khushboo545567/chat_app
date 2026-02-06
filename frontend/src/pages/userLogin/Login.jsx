@@ -16,6 +16,7 @@ import {
   verifyOtp,
 } from "../../services/user.service.js";
 import { toast } from "react-toastify";
+
 // // ================= VALIDATIONS =================
 
 const loginValidationSchema = yup
@@ -25,16 +26,16 @@ const loginValidationSchema = yup
       .string()
       .nullable()
       .matches(/^\d+$/, "Phone number must contain only digits")
-      .transform((value, originalValue) => {
-        originalValue.trim() === "" ? null : value;
-      }),
+      .transform((value, originalValue) =>
+        originalValue.trim() === "" ? null : value,
+      ),
     email: yup
       .string()
       .nullable()
       .email("Please enter the valid email ")
-      .transform((value, originalValue) => {
-        originalValue.trim() === "" ? null : value;
-      }),
+      .transform((value, originalValue) =>
+        originalValue.trim() === "" ? null : value,
+      ),
   })
   .test(
     "atleast-one",
@@ -63,7 +64,8 @@ function Login() {
     useLoginStore();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("", "", "", "", "", "");
+
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [avatar, setAvatar] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
@@ -112,30 +114,71 @@ function Login() {
       country.dialCode.includes(searchTerm),
   );
 
-  const onLoadingSubmit = async () => {
+  // const onLoadingSubmit = async () => {
+  //   try {
+  //     setLoading(true);
+  //     if (email) {
+  //       const response = await sendOtp(null, null, email);
+  //       if (response.status === "success") {
+  //         toast.info("OTP send to your email");
+  //         setUserPhoneData({ email });
+  //         setStep(2);
+  //       }
+  //     } else {
+  //       const response = await sendOtp(
+  //         phoneNumber,
+  //         selectedCountry.dialCode,
+  //         null,
+  //       );
+  //       if (response.status === "success") {
+  //         toast.success("OTP send to your phone number");
+  //         setUserPhoneData({
+  //           phoneNumber,
+  //           phoneSuffix: selectedCountry.dialCode,
+  //         });
+  //         setStep(2);
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //     setError(error.message || "Filed to send OTP");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const onLoadingSubmit = async (formData) => {
     try {
       setLoading(true);
+
+      const { phoneNumber, email } = formData;
+
+      console.log("FORM DATA:", formData);
+
+      let response;
+
       if (email) {
-        const response = await sendOtp(null, null, email);
-        if (response.status === "success") {
-          toast.info("OTP send to your email");
-          setUserPhoneData({ email });
-          setStep(2);
-        }
+        response = await sendOtp(null, null, email);
       } else {
-        const response = await sendOtp(phoneNumber, selectedCountry.dialCode);
-        if (response.status === "success") {
-          toast.info("OTP send to your phone number");
-          setUserPhoneData({
-            phoneNumber,
-            phoneSuffix: selectedCountry.dialCode,
-          });
-          setStep(2);
-        }
+        response = await sendOtp(phoneNumber, selectedCountry.dialCode, null);
+      }
+
+      console.log("OTP RESPONSE:", response);
+
+      if (response?.status === "success") {
+        toast.success("OTP sent successfully");
+
+        setUserPhoneData(
+          email
+            ? { email }
+            : { phoneNumber, phoneSuffix: selectedCountry.dialCode },
+        );
+
+        setStep(2);
       }
     } catch (error) {
-      console.log(error);
-      setError(error.message || "Filed to send OTP");
+      console.error(error);
+      toast.error(error.message || "Failed to send OTP");
     } finally {
       setLoading(false);
     }
@@ -147,7 +190,8 @@ function Login() {
       if (!userPhoneData) {
         throw new Error("Phone or email data is missing");
       }
-      const otpString = opt.join();
+      const otpString = otp.join("");
+
       let response;
       if (userPhoneData?.email) {
         response = await verifyOtp(null, null, otp, userPhoneData.email);
@@ -208,12 +252,13 @@ function Login() {
   };
 
   const handleOtpChange = (index, value) => {
-    const newOtp = { ...otp };
+    const newOtp = [...otp];
     newOtp[index] = value;
-    sendOtp(newOtp);
+    setOtp(newOtp);
     setOtpValue("otp", newOtp.join(""));
+
     if (value && index < 5) {
-      document.getElementById(`otp-${index + 1}`).focus();
+      document.getElementById(`otp-${index + 1}`)?.focus();
     }
   };
 
@@ -377,19 +422,17 @@ function Login() {
               {userPhoneData.phoneNumber && userPhoneData?.phoneNumber}
             </p>
             <div className="flex justify-between ">
-              {otp.map((digit, index) => {
+              {otp.map((digit, index) => (
                 <input
                   key={index}
                   type="text"
                   id={`otp-${index}`}
                   maxLength={1}
                   value={digit}
-                  onChange={(e) => {
-                    (handleOtpChange, e.target.value);
-                  }}
+                  onChange={(e) => handleOtpChange(index, e.target.value)}
                   className={`w-12 h-12 text-center border ${theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300"} rounded-md focus: outline-none focus:ring-2 focus:ring-green-500 ${otpErrors.otp ? "border-red-500 " : ""}`}
-                />;
-              })}
+                />
+              ))}
             </div>
             {otpErrors.otp && (
               <p className="text-red-500 text-sm">{otpErrors.otp.message}</p>
