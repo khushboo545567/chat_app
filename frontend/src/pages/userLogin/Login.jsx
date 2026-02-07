@@ -207,7 +207,8 @@ function Login() {
       setAvatar(URL.createObjectURL(file));
     }
   };
-  const onProfileSubmit = async () => {
+
+  const onProfileSubmit = async (data) => {
     try {
       setLoading(true);
       const formData = new FormData();
@@ -282,6 +283,7 @@ function Login() {
         <ProgressBar />
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+
         {step === 1 && (
           <form
             className="space-y-4"
@@ -449,9 +451,9 @@ function Login() {
                   <FaPlus className="w-4 h-4" />
                 </label>
                 <input
-                  type=" file"
+                  type="file"
                   id="profile-picture"
-                  accept="images/*"
+                  accept="image/*"
                   onChange={handleFileChange}
                   className="hidden"
                 />
@@ -491,7 +493,7 @@ function Login() {
             </div>
             {profileErrors.aggred && (
               <p className="text-red-500 text-sm mt-1">
-                {profileErrors.username.message}
+                {profileErrors.aggred.message}
               </p>
             )}
             <button
@@ -499,7 +501,7 @@ function Login() {
               // disabled={!Watch("aggred") || loading}
               className={`w-full bg-green-500 text-white font-bold py-3 px-4 rounded-md transition duration-300 ease-in-out transform hover:scale-105 items-center justify-center text-lg ${loading ? "opacity-50 cursor-not-allowed" : " "}`}
             >
-              {loading ? <Spinner /> : " create profile"}
+              {loading ? <Spinner /> : "create profile"}
             </button>
           </form>
         )}
