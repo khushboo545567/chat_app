@@ -1,9 +1,11 @@
 import { useState } from "react";
-import useUserStore from "../../store/useUserStore.js";
+import useUserStore from "./store/useUserStore.js";
 import { useEffect } from "react";
 import { checkUserAuth } from "./services/user.service.js";
 import { Navigate, Outlet } from "react-router-dom";
-import { useStore } from "zustand";
+import React from "react";
+import Loader from "./utils/Loder";
+import { useLocation } from "react-router-dom";
 
 export const ProctedRoute = () => {
   const location = useLocation();
@@ -42,7 +44,7 @@ export const ProctedRoute = () => {
 };
 
 export const PublicRoute = () => {
-  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const isAuthenticated = useUserStore((state) => state.isAuthenticated);
   if (isAuthenticated) {
     return <Navigate to="/" replace />;
     // replace with the url

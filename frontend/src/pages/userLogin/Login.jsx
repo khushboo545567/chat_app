@@ -22,6 +22,7 @@ import {
   verifyOtp,
 } from "../../services/user.service.js";
 import { toast } from "react-toastify";
+import Loader from "../../utils/Loder";
 
 // // ================= VALIDATIONS =================
 
