@@ -31,10 +31,7 @@ const Home = () => {
         transition={{ duration: 0.5 }}
         className="h-full"
       >
-        <ChatList
-          constacts={allUsers}
-          setSelectedContet={setSelectedContet}
-        ></ChatList>
+        <ChatList constacts={allUsers}></ChatList>
       </motion.div>
     </Layout>
   );
