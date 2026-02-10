@@ -1,4 +1,4 @@
-import React, { Profiler, useState } from "react";
+import React, { useState } from "react";
 import useLoginStore from "../../store/useLoginStore.js";
 import countries from "../../utils/Countries.js";
 import * as yup from "yup";
@@ -60,8 +60,8 @@ const otpValidationSchema = yup.object().shape({
 });
 
 const profileValidationSchema = yup.object().shape({
-  username: yup.string().required("username is required"),
-  aggred: yup.bool().oneOf([true], "you must aggree to the terms"),
+  userName: yup.string().required("username is required"),
+  isAgreed: yup.bool().oneOf([true], "you must aggree to the terms"),
 });
 
 // // ================= COMPONENT =================
@@ -171,8 +171,7 @@ function Login() {
 
       let response;
       if (userPhoneData?.email) {
-        response = await verifyOtp(null, null, userPhoneData.email, otp);
-        console.log("otp submit ", email);
+        response = await verifyOtp(null, null, userPhoneData.email, otpString);
       } else {
         response = await verifyOtp(
           userPhoneData.phoneNumber,
@@ -180,21 +179,21 @@ function Login() {
           null,
           otpString,
         );
-        console.log("otp submit", phoneNumber);
       }
       if (response?.success) {
         toast.success("OTP verified successfully ");
-        const user = response.data?.user;
+        const user = response.data;
 
-        console.log(response.data);
-        if (user?.username && user?.avatar) {
+        if (user?.userName && user?.avatar) {
           setUser(user);
           toast.success("Welcome back to Whatshapp");
           navigate("/");
           resetLoginState();
+        } else {
+          setStep(3);
         }
       } else {
-        setStep(3);
+        toast.error(response?.message || "Invalid or expired OTP");
       }
     } catch (error) {
       console.log(error);
@@ -217,15 +216,19 @@ function Login() {
     try {
       setLoading(true);
       const formData = new FormData();
-      formData.append("username", data.username);
-      formData.append("aggred", data.aggred);
+      formData.append("userName", data.userName);
+      formData.append("isAgreed", data.isAgreed);
+
       if (avatarFile) {
         formData.append("avatar", avatarFile);
       }
-      await updateProfile(formData);
-      toast.success("Welcome back to Whatsapp");
-      navigate("/");
-      resetLoginState();
+      const response = await updateProfile(formData);
+      if (response.success) {
+        setUser(response.data);
+        toast.success("Welcome back to Whatsapp");
+        navigate("/");
+        resetLoginState();
+      }
     } catch (error) {
       console.log(error);
       setError(error.message || "Filed to update user profile");
@@ -469,20 +472,20 @@ function Login() {
                 className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme === "dark" ? "text-gray-100" : "text-gray-400"}`}
               />
               <input
-                {...profileRegister("username")}
+                {...profileRegister("userName")}
                 type="text"
                 placeholder="Username"
                 className={`w-full pl-10 pr-3 py-2 border ${theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300"} rounded-md focus:outline-nome focus:ring-2 focus:ring-green-500 text-lg`}
               />
-              {profileErrors.username && (
+              {profileErrors.userName && (
                 <p className="text-red-500 text-sm mt-1">
-                  {profileErrors.username.message}
+                  {profileErrors.userName.message}
                 </p>
               )}
             </div>
             <div className="flex items-center space-x-2">
               <input
-                {...profileRegister("aggred")}
+                {...profileRegister("isAgreed")}
                 type="checkbox"
                 className={`rounded ${theme === "dark" ? "text-green-500 bg-gray-700" : " text-green-500"} focus:ring-green-500`}
               />
@@ -496,9 +499,9 @@ function Login() {
                 </a>
               </label>
             </div>
-            {profileErrors.aggred && (
+            {profileErrors.isAgreed && (
               <p className="text-red-500 text-sm mt-1">
-                {profileErrors.aggred.message}
+                {profileErrors.isAgreed.message}
               </p>
             )}
             <button

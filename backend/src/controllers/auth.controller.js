@@ -8,7 +8,6 @@ import { sendOtpToPhoneNumber, verifySms } from "../service/twilio.service.js";
 import generateToken from "../utils/generateToken.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import { Message } from "../models/message.model.js";
-// import { RequestClient } from "twilio";
 
 const sendOtp = asyncHandler(async (req, res) => {
   const { phoneNumber, phoneSuffix, email } = req.body;
@@ -57,6 +56,7 @@ const sendOtp = asyncHandler(async (req, res) => {
 
 const verifyOtp = asyncHandler(async (req, res) => {
   const { phoneNumber, phoneSuffix, email, otp } = req.body;
+
   let user;
   if (!otp) {
     return res.status(400).json(new ApiError(400, "OTP is required"));
@@ -71,12 +71,11 @@ const verifyOtp = asyncHandler(async (req, res) => {
     }
 
     const now = new Date();
-    console.log("heere the email finish ");
 
     if (
       !user.emailOtp ||
       String(user.emailOtp) !== String(otp) ||
-      now > new Date(user.emailOtpExpiry)
+      now >= new Date(user.emailOtpExpiry)
     ) {
       throw new ApiError(400, "Invalid or expired OTP");
     }
@@ -121,11 +120,12 @@ const verifyOtp = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "OTP verified successfully"));
+    .json(new ApiResponse(200, user, "OTP verified successfully"));
 });
 
 const updateProfile = asyncHandler(async (req, res) => {
   const { userName, about, isAgreed } = req.body;
+
   const userId = req.user.userId;
 
   const user = await User.findById(userId);

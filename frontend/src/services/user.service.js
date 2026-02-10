@@ -15,6 +15,8 @@ const sendOtp = async (phoneNumber, phoneSuffix, email) => {
 };
 
 const verifyOtp = async (phoneNumber, phoneSuffix, email, otp) => {
+  console.log(email);
+  console.log(otp);
   try {
     const response = await axiosInstance.post("/auth/verify-otp", {
       phoneNumber,
