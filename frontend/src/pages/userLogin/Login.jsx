@@ -172,6 +172,7 @@ function Login() {
       let response;
       if (userPhoneData?.email) {
         response = await verifyOtp(null, null, userPhoneData.email, otp);
+        console.log("otp submit ", email);
       } else {
         response = await verifyOtp(
           userPhoneData.phoneNumber,
@@ -179,10 +180,13 @@ function Login() {
           null,
           otpString,
         );
+        console.log("otp submit", phoneNumber);
       }
-      if (response.status === "success") {
+      if (response?.success) {
         toast.success("OTP verified successfully ");
         const user = response.data?.user;
+
+        console.log(response.data);
         if (user?.username && user?.avatar) {
           setUser(user);
           toast.success("Welcome back to Whatshapp");

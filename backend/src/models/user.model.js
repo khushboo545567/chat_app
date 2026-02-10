@@ -61,13 +61,16 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    contacts: [
-      {
-        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        nickname: String,
-        blocked: { type: Boolean, default: false },
-      },
-    ],
+    contacts: {
+      type: [
+        {
+          user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+          nickname: String,
+          blocked: { type: Boolean, default: false },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true },
 );

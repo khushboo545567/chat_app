@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import useThemeStore from "../store/useThemeStore";
 import useLayoutStore from "../store/useLayoutStore";
 import { FaWhatsapp, FaUserCircle, FaCog } from "react-icons/fa";
-import motion from "framer-motion";
+import { motion } from "framer-motion";
 import { MdOutlineRadioButtonChecked } from "react-icons/md";
 
 const Sidebar = () => {

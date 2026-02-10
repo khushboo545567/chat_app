@@ -24,6 +24,7 @@ const sendOtp = asyncHandler(async (req, res) => {
     if (!user) {
       user = await User.create({ email });
     }
+
     user.emailOtp = otp;
     user.emailOtpExpiry = otpExpiry;
     await user.save();

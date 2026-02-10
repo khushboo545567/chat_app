@@ -1,7 +1,6 @@
 import { useState } from "react";
 import useLayoutStore from "../../store/useLayoutStore";
 import useThemeStore from "../../store/useThemeStore";
-import useThemeStore from "../store/useThemeStore";
 import { FaSearch } from "react-icons/fa";
 
 const ChatList = ({ constacts }) => {
