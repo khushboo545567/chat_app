@@ -79,13 +79,11 @@ const verifyOtp = asyncHandler(async (req, res) => {
     ) {
       throw new ApiError(400, "Invalid or expired OTP");
     }
-    console.log("heere the email finish ");
 
     user.isVerified = true;
     user.emailOtp = null;
     user.emailOtpExpiry = null;
     await user.save();
-    console.log("heere the email finish ");
 
     // ---------- PHONE OTP ----------
   } else {
