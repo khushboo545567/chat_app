@@ -16,13 +16,15 @@ export const ProctedRoute = () => {
   useEffect(() => {
     const verifyAuth = async () => {
       try {
-        const result = await checkUserAuth(); // backend checks token
-        console.log("user data from protected routes", result.data);
+        const result = await checkUserAuth();
+        // result = { success, data, message }
 
-        // ✅ if backend returned user, user is authenticated
-        setUser(result.data);
+        if (result.success) {
+          setUser(result.data);
+        } else {
+          clearUser();
+        }
       } catch (error) {
-        console.log(error);
         clearUser();
       } finally {
         setIsChecking(false);
@@ -32,14 +34,12 @@ export const ProctedRoute = () => {
     verifyAuth();
   }, []);
 
-  if (isChecking) {
-    return <Loader />;
-  }
+  if (isChecking) return <Loader />;
+
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  //   user auth render the protected route
   return <Outlet />;
 };
 

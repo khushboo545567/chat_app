@@ -1,3 +1,4 @@
+import React from "react";
 import Layout from "../components/Layout.jsx";
 import { motion } from "framer-motion";
 import ChatList from "./chat/ChatList.jsx";

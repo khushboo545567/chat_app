@@ -42,11 +42,13 @@ const updateProfile = async (updateData) => {
 const checkUserAuth = async () => {
   try {
     const response = await axiosInstance.get("/auth/get-user-profile");
-    if (response.status.data === "success") {
+
+    if (response.success) {
       return { isAuthenticated: true, user: response?.data?.data };
-    } else if (response.status === "error") {
+    } else if (response.status === false) {
       return response.data;
     }
+    return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error.message;
   }
