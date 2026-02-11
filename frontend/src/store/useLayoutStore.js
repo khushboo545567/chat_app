@@ -1,17 +1,18 @@
-import { persist } from "zustand/middleware";
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 const useLayoutStore = create(
   persist(
     (set) => ({
       activeTabs: "chats",
-      selectedContet: null,
-      setSelectedContact: (contact) => set({ selectedContet: contact }),
-      setActiveTab: (tab) => set({ setActiveTab: tab }),
+      selectedContact: null,
+
+      setSelectedContact: (contact) => set({ selectedContact: contact }),
+
+      setActiveTab: (tab) => set({ activeTabs: tab }),
     }),
     {
-      name: "Active-state-store",
-      getStorage: () => localStorage,
+      name: "layout-store",
     },
   ),
 );
