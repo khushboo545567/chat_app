@@ -225,6 +225,51 @@ const getUserContacts = asyncHandler(async (req, res) => {
     );
 });
 
+const addToContacts = asyncHandler(async (req, res) => {
+  const userId = req.user.userId;
+  const { contactId } = req.params;
+
+  // prevent self add
+  if (userId.toString() === contactId.toString()) {
+    console.log("user id and contact id is same ");
+    return res
+      .status(400)
+      .json(new ApiError(400, "You cannot add yourself to your contacts"));
+  }
+
+  //  Check contact exists
+  const contactUser = await User.findById(contactId);
+  if (!contactUser) {
+    return res.status(404).json(new ApiError(404, "Contact not found"));
+  }
+
+  //  Get logged-in user
+  const user = await User.findById(userId);
+
+  //  Check if already added
+  const alreadyExists = user.contacts.some(
+    (c) => c.user.toString() === contactId,
+  );
+
+  if (alreadyExists) {
+    return res.status(400).json(new ApiError(400, "Contact already exists"));
+  }
+
+  //  Push contact
+  user.contacts.push({
+    user: contactId,
+    nickname: contactUser.userName,
+    blocked: false,
+  });
+
+  await user.save();
+
+  // Response
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "contacts added successfully !"));
+});
+
 export {
   sendOtp,
   verifyOtp,
@@ -232,4 +277,5 @@ export {
   logOut,
   getUserContacts,
   getUserProfile,
+  addToContacts,
 };
