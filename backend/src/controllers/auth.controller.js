@@ -227,11 +227,10 @@ const getUserContacts = asyncHandler(async (req, res) => {
 
 const addToContacts = asyncHandler(async (req, res) => {
   const userId = req.user.userId;
-  const { contactId } = req.params;
+  const { contactId } = req.body;
 
   // prevent self add
   if (userId.toString() === contactId.toString()) {
-    console.log("user id and contact id is same ");
     return res
       .status(400)
       .json(new ApiError(400, "You cannot add yourself to your contacts"));
@@ -270,6 +269,41 @@ const addToContacts = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "contacts added successfully !"));
 });
 
+const deleteContacts = asyncHandler(async (req, res) => {
+  const userId = req.user.userId;
+  const { contactId } = req.body;
+
+  if (!contactId) {
+    return res.status(400).json(new ApiError(400, "contactId is required"));
+  }
+
+  // Check contact exists
+  const contactUser = await User.findById(contactId);
+  if (!contactUser) {
+    return res.status(404).json(new ApiError(404, "Contact not found"));
+  }
+
+  // Get logged-in user
+  const user = await User.findById(userId);
+
+  // Check if contact exists in user's contacts
+  const contactIndex = user.contacts.findIndex(
+    (c) => c.user.toString() === contactId.toString(),
+  );
+
+  if (contactIndex === -1) {
+    return res.status(400).json(new ApiError(400, "Contact not in your list"));
+  }
+
+  // Remove contact
+  user.contacts.splice(contactIndex, 1);
+  await user.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Contact deleted successfully"));
+});
+
 export {
   sendOtp,
   verifyOtp,
@@ -278,4 +312,5 @@ export {
   getUserContacts,
   getUserProfile,
   addToContacts,
+  deleteContacts,
 };

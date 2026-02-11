@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   addToContacts,
+  deleteContacts,
   getUserContacts,
   getUserProfile,
   logOut,
@@ -28,6 +29,8 @@ router.route("/get-users").get(verifyToken, getUserContacts);
 
 router.route("/get-user-profile").get(verifyToken, getUserProfile);
 
-router.route("/add-contacts/:contactId").post(verifyToken, addToContacts);
+router.route("/add-contacts").post(verifyToken, addToContacts);
+
+router.route("/delete-contact").post(verifyToken, deleteContacts);
 
 export default router;
