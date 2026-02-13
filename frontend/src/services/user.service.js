@@ -1,3 +1,4 @@
+import { data } from "react-router-dom";
 import axiosInstance from "./url.service";
 
 const sendOtp = async (phoneNumber, phoneSuffix, email) => {
@@ -15,8 +16,6 @@ const sendOtp = async (phoneNumber, phoneSuffix, email) => {
 };
 
 const verifyOtp = async (phoneNumber, phoneSuffix, email, otp) => {
-  console.log(email);
-  console.log(otp);
   try {
     const response = await axiosInstance.post("/auth/verify-otp", {
       phoneNumber,
@@ -66,6 +65,7 @@ const logoutUser = async () => {
 const getContacts = async () => {
   try {
     const response = await axiosInstance.get("/auth/get-users");
+    console.log(response.data);
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : error.message;

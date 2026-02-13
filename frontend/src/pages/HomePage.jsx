@@ -22,6 +22,8 @@ const Home = () => {
     getContact();
   }, []);
 
+  console.log("from home get contacts", allUsers);
+
   return (
     <Layout>
       <motion.div

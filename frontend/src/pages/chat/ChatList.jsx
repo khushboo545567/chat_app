@@ -13,7 +13,7 @@ const ChatList = ({ contacts }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredContacts = contacts.filter((c) =>
-    c.username.toLowerCase().includes(searchTerm.toLowerCase()),
+    c.userName.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -33,13 +33,13 @@ const ChatList = ({ contacts }) => {
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search or start new chat"
           className={`w-full pl-10 pr-4 py-2 rounded-lg text-sm outline-none
-      ${
-        theme === "dark"
-          ? "bg-gray-800 text-white placeholder-gray-400 focus:ring-green-400"
-          : "bg-gray-100 text-black placeholder-gray-500 focus:ring-green-500"
-      }
-      focus:ring-2
-    `}
+            ${
+              theme === "dark"
+                ? "bg-gray-800 text-white placeholder-gray-400 focus:ring-green-400"
+                : "bg-gray-100 text-black placeholder-gray-500 focus:ring-green-500"
+            }
+            focus:ring-2
+          `}
         />
       </div>
 
@@ -48,13 +48,40 @@ const ChatList = ({ contacts }) => {
           <motion.div
             key={contact._id}
             onClick={() => setSelectedContact(contact)}
-            className={`p-3 cursor-pointer ${
+            className={`p-3 cursor-pointer flex items-center gap-3 ${
               selectedContact?._id === contact._id
                 ? "bg-gray-200"
                 : "hover:bg-gray-100"
             }`}
           >
-            <div className="font-semibold">{contact.username}</div>
+            {/* Avatar */}
+            <img
+              src={contact.avatar}
+              alt={contact.userName}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+
+            {/* Name & Status */}
+            <div className="flex-1">
+              <div className="font-semibold">{contact.userName}</div>
+              <div className="flex items-center justify-between">
+                {/* Last message OR Online/Offline */}
+                <div className="text-xs text-gray-500 truncate max-w-40">
+                  {contact.lastMessage
+                    ? contact.lastMessage
+                    : contact.isOnline
+                      ? "Online"
+                      : "Offline"}
+                </div>
+
+                {/* Unread count (future-ready) */}
+                {contact.unreadCount > 0 && (
+                  <div className="ml-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
+                    {contact.unreadCount}
+                  </div>
+                )}
+              </div>
+            </div>
           </motion.div>
         ))}
       </div>

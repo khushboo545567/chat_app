@@ -7,7 +7,7 @@ import sendOtpEmail from "../service/email.service.js";
 import { sendOtpToPhoneNumber, verifySms } from "../service/twilio.service.js";
 import generateToken from "../utils/generateToken.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
-import { Message } from "../models/message.model.js";
+import { Chatroom } from "../models/chatroom.model.js";
 
 const sendOtp = asyncHandler(async (req, res) => {
   const { phoneNumber, phoneSuffix, email } = req.body;
