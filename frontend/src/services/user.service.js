@@ -1,4 +1,3 @@
-import { data } from "react-router-dom";
 import axiosInstance from "./url.service";
 
 const sendOtp = async (phoneNumber, phoneSuffix, email) => {

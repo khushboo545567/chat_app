@@ -3,7 +3,7 @@ import useLoginStore from "../../store/useLoginStore.js";
 import countries from "../../utils/Countries.js";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { data, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import useUserStore from "../../store/useUserStore.js";
 import { useForm, Watch } from "react-hook-form";
 import useThemeStore from "../../store/useThemeStore.js";

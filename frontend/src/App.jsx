@@ -9,19 +9,20 @@ import UserDetails from "./pages/userDetailsPage";
 import Setting from "./pages/settings/Setting";
 import Status from "./pages/status/Status";
 import useUserStore from "./store/useUserStore";
-import inilizeSocket from "../../backend/src/service/socket.service";
-import { disconnectSocket } from "./services/chat.service";
+
+// import inilizeSocket from "../../backend/src/service/socket.service";
+// import { disconnectSocket } from "./services/chat.service";
 
 function App() {
-  const { user } = useUserStore();
-  useEffect(() => {
-    if (user?._id) {
-      const socket = inilizeSocket();
-    }
-    return () => {
-      disconnectSocket();
-    };
-  }, [user]);
+  // const { user } = useUserStore();
+  // useEffect(() => {
+  //   if (user?._id) {
+  //     const socket = inilizeSocket();
+  //   }
+  //   return () => {
+  //     disconnectSocket();
+  //   };
+  // }, [user]);
 
   return (
     <>
