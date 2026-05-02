@@ -6,7 +6,13 @@ import useThemeStore from "../store/useThemeStore";
 import Sidebar from "./sidebar";
 import ChatRoom from "../pages/chat/ChatRoom";
 
-const Layout = ({ children }) => {
+const Layout = ({
+  children,
+  isThemeDialogOpen,
+  toggleThemeDialog,
+  isStatusPreviewOpen,
+  statusPreviewContent,
+}) => {
   const selectedContact = useLayoutStore((state) => state.selectedContact);
   const setSelectedContact = useLayoutStore(
     (state) => state.setSelectedContact,

@@ -34,7 +34,11 @@ const inilizeSocket = (server) => {
           lastSeen: new Date(),
         });
 
-        io.emit("user_status", { userId, isOnline: true });
+        io.emit("user_status", {
+          userId,
+          isOnline: true,
+          lastSeen: new Date(),
+        });
       } catch (err) {
         console.error("user_connected error:", err);
       }

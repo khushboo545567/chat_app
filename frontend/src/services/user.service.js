@@ -70,6 +70,16 @@ const getContacts = async () => {
     throw error.response ? error.response.data : error.message;
   }
 };
+
+const getConversation = async () => {
+  try {
+    const response = await axiosInstance.get("/message/get-conversation");
+
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
+};
 export {
   sendOtp,
   verifyOtp,
@@ -77,4 +87,6 @@ export {
   checkUserAuth,
   logoutUser,
   getContacts,
+  getConversation,
+  // clear user
 };

@@ -104,7 +104,7 @@ const messageSend = asyncHandler(async (req, res) => {
 
 // fetches all chatrooms where the user is a participant
 const getConversation = asyncHandler(async (req, res) => {
-  const userId = req.user.userId;
+  const userId = new mongoose.Types.ObjectId(req.user.userId);
 
   //  Find all chatrooms for this user
   const chatrooms = await Chatroom.find({

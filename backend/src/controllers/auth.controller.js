@@ -9,6 +9,7 @@ import generateToken from "../utils/generateToken.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import { Chatroom } from "../models/chatroom.model.js";
 
+// REGISTER AND LOGIN DONE
 const sendOtp = asyncHandler(async (req, res) => {
   const { phoneNumber, phoneSuffix, email } = req.body;
   const otp = optGenerate();

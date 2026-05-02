@@ -2,15 +2,15 @@ import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout.jsx";
 import { motion } from "framer-motion";
 import ChatList from "./chat/ChatList.jsx";
-import { getContacts } from "../services/user.service.js";
+import { getContacts, getConversation } from "../services/user.service.js";
 
 const Home = () => {
   const [allUsers, setAllUsers] = useState([]);
 
-  const getContact = async () => {
+  const getConversations = async () => {
     try {
-      const result = await getContacts();
-      if (result?.success) {
+      const result = await getConversation();
+      if (result?.statuscode === 200) {
         setAllUsers(result.data);
       }
     } catch (error) {
@@ -19,10 +19,10 @@ const Home = () => {
   };
 
   useEffect(() => {
-    getContact();
+    getConversations();
   }, []);
 
-  console.log("from home get contacts", allUsers);
+  console.log("get all conversation ", allUsers);
 
   return (
     <Layout>

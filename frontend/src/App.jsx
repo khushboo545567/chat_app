@@ -9,20 +9,43 @@ import UserDetails from "./pages/userDetailsPage";
 import Setting from "./pages/settings/Setting";
 import Status from "./pages/status/Status";
 import useUserStore from "./store/useUserStore";
+import useChatStore from "./store/useChatStore.js";
 
 import { initializeSocket } from "./services/chat.service";
 import { disconnectSocket } from "./services/chat.service";
 
 function App() {
   const { user } = useUserStore();
+  const { setCurrenctUser, initSocketListeners, cleanup } = useChatStore();
+  // useEffect(() => {
+  //   if (user?._id) {
+  //     const socket = initializeSocket();
+  //     if (socket) {
+  //       setCurrenctUser(user);
+  //       initSocketListeners();
+  //     }
+  //   }
+  //   return () => {
+  //     cleanup();
+  //     disconnectSocket();
+  //   };
+  // }, [user, setCurrenctUser]);
+
   useEffect(() => {
-    if (user?._id) {
-      const socket = initializeSocket();
+    if (!user?._id) return;
+
+    const socketInstance = initializeSocket();
+
+    if (socketInstance) {
+      setCurrenctUser(user);
+      initSocketListeners();
     }
+
     return () => {
+      cleanup();
       disconnectSocket();
     };
-  }, [user]);
+  }, [user?._id]);
 
   return (
     <>

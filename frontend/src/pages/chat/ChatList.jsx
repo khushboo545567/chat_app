@@ -13,8 +13,16 @@ const ChatList = ({ contacts }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredContacts = contacts.filter((c) =>
-    c.userName.toLowerCase().includes(searchTerm.toLowerCase()),
+    c.userName?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  const formatTime = (time) => {
+    return new Date(time).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
 
   return (
     <div className="h-screen border-r border-gray-400">
@@ -32,7 +40,7 @@ const ChatList = ({ contacts }) => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search or start new chat"
-          className={`w-full pl-10 pr-4 py-2 rounded-lg text-sm outline-none
+          className={`w-full pl-10 pr-4 py-2 pb-4 rounded-lg text-sm outline-none
             ${
               theme === "dark"
                 ? "bg-gray-800 text-white placeholder-gray-400 focus:ring-green-400"
@@ -85,6 +93,46 @@ const ChatList = ({ contacts }) => {
           </motion.div>
         ))}
       </div>
+
+      {contacts.map((userList) => {
+        const userr = userList.participants.find(
+          (u) => u._id.toString() !== user._id.toString(),
+        );
+
+        if (!userr) return null;
+
+        return (
+          <div
+            className=" px-6 flex gap-6 items-center cursor-pointer rounded-2xl"
+            key={userList.roomId}
+          >
+            <div>
+              <img
+                src={userr.avatar}
+                alt="user photo"
+                className="rounded-full w-12 h-12"
+              />
+            </div>
+            <div className="w-full">
+              <div className="flex justify-between">
+                <span className="font-semibold">{userr.userName}</span>
+                <span className="text-sm text-gray-600 truncate ">
+                  {formatTime(userList.lastMessage?.time)}
+                </span>
+              </div>
+
+              <div className="flex justify-between pt-1">
+                <span className="text-sm text-gray-600 truncate ">
+                  {userList.lastMessage?.content}
+                </span>
+                <span className="bg-green-500 text-white text-xs rounded-full px-2 py-0.5">
+                  {0}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };
