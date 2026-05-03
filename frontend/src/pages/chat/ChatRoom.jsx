@@ -2,6 +2,7 @@ import React, { isValidElement, useEffect, useRef, useState } from "react";
 import useThemeStore from "../../store/useThemeStore";
 import useUserStore from "../../store/useUserStore";
 import useChatStore from "../../store/useChatStore.js";
+import useLayoutStore from "../../store/useLayoutStore";
 import { isToday, isYesterday, format } from "date-fns";
 import MessageBubble from "./MessageBubble.jsx";
 import {
@@ -29,6 +30,7 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
 
   const { theme } = useThemeStore();
   const { user } = useUserStore();
+
   const {
     messages,
     loading,
@@ -51,21 +53,18 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
   const isTyping = isUserTyping(selectedContact?._id);
 
   useEffect(() => {
-    if (selectedContact?._id && conversations?.data?.length > 0) {
-      const conversation = conversations?.data?.find((conv) => {
-        conv.participants.some(
-          (participant) => participant._id === selectedContact._id,
-        );
-      });
-      if (conversation._id) {
-        fetchMessage(conversation._id);
-      }
-    }
-  }, [selectedContact, conversations]);
+    if (selectedContact?.roomId) {
+      const receiver = selectedContact.participants.find(
+        (r) => r._id !== user._id,
+      );
 
-  useEffect(() => {
-    fetchConvertation();
-  }, []);
+      fetchMessage(receiver._id);
+    }
+  }, [selectedContact]);
+
+  // useEffect(() => {
+  //   fetchConvertation();
+  // }, []);
 
   // automatically scroll when user chat or message
   const scrollToBottom = () => {

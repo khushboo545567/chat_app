@@ -10,6 +10,7 @@ import Setting from "./pages/settings/Setting";
 import Status from "./pages/status/Status";
 import useUserStore from "./store/useUserStore";
 import useChatStore from "./store/useChatStore.js";
+import useLayoutStore from "./store/useLayoutStore.js";
 
 import { initializeSocket } from "./services/chat.service";
 import { disconnectSocket } from "./services/chat.service";
@@ -17,6 +18,8 @@ import { disconnectSocket } from "./services/chat.service";
 function App() {
   const { user } = useUserStore();
   const { setCurrenctUser, initSocketListeners, cleanup } = useChatStore();
+  const { setSelectedContact } = useLayoutStore();
+
   // useEffect(() => {
   //   if (user?._id) {
   //     const socket = initializeSocket();
@@ -43,6 +46,7 @@ function App() {
 
     return () => {
       cleanup();
+      setSelectedContact(null);
       disconnectSocket();
     };
   }, [user?._id]);

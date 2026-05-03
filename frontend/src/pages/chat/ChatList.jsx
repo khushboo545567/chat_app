@@ -104,6 +104,7 @@ const ChatList = ({ contacts }) => {
         return (
           <div
             className=" px-6 flex gap-6 items-center cursor-pointer rounded-2xl"
+            onClick={() => setSelectedContact(userList)}
             key={userList.roomId}
           >
             <div>

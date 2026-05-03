@@ -19,7 +19,7 @@ const useChatStore = create((set, get) => ({
   /* ================= SOCKET LISTENERS ================= */
   initSocketListeners: () => {
     const socket = getSocket();
-    console.log("socket .....", socket);
+
     if (!socket) return;
 
     /* ---------- clear old listeners ---------- */
@@ -167,7 +167,7 @@ const useChatStore = create((set, get) => ({
   },
 
   // FETCH MESSAGE FOR A CONVERTATION
-  fetchMessage: async (conversationId, receiverId) => {
+  fetchMessage: async (receiverId) => {
     if (!receiverId) {
       return;
     }
@@ -177,22 +177,20 @@ const useChatStore = create((set, get) => ({
       const { data } = await axiosInstance.get(
         `message/get-messages/${receiverId}`,
       );
-      const messageArray = data.data || data || [];
+      const messageArray = data.data || [];
       set({
         messages: messageArray,
+
         // currentConversation: conversationId,
         // store the full conversation object so _id comparison works in socket listener
-        currentConversation:
-          typeof conversationId === "object"
-            ? conversationId
-            : { _id: conversationId },
+        currentConversation: { _id: data.data[0]?.roomId },
         loading: false,
       });
 
       //mark as read message
-      const { MarkMsgsAsRead } = get();
-      MarkMsgsAsRead();
-      return messageArray;
+      // const { MarkMsgsAsRead } = get();
+      // MarkMsgsAsRead();
+      // return messageArray;
     } catch (error) {
       set({
         error: error.response ? error.response.data : error.message,

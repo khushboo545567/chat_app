@@ -22,8 +22,6 @@ const Home = () => {
     getConversations();
   }, []);
 
-  console.log("get all conversation ", allUsers);
-
   return (
     <Layout>
       <motion.div
