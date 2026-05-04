@@ -3,7 +3,7 @@ import useThemeStore from "../../store/useThemeStore";
 import useUserStore from "../../store/useUserStore";
 import useChatStore from "../../store/useChatStore.js";
 import useLayoutStore from "../../store/useLayoutStore";
-import { isToday, isYesterday, format } from "date-fns";
+import { isToday, isYesterday, format, isValid } from "date-fns";
 import MessageBubble from "./MessageBubble.jsx";
 import {
   FaArrowLeft,
@@ -61,6 +61,7 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
       fetchMessage(receiver._id);
     }
   }, [selectedContact]);
+  console.log("messages is here", messages);
 
   // useEffect(() => {
   //   fetchConvertation();
@@ -134,21 +135,22 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
   };
 
   const renderDateSeparator = (date) => {
-    if (!isValidateDate(date)) {
-      return null;
-    }
-    let dateString;
-    if (isToday(date)) {
-      dateString = "Today";
-    }
-    if (isYesterday(date)) {
-      dateString = "Yesterday";
+    const dateObj = new Date(date);
+
+    if (isNaN(dateObj)) return null;
+
+    let label;
+
+    if (isToday(dateObj)) {
+      label = "Today";
+    } else if (isYesterday(dateObj)) {
+      label = "Yesterday";
     } else {
-      dateString = format(date, "EEEE, MMMM d");
+      label = format(dateObj, "EEEE, MMMM d");
     }
 
     return (
-      <div className="justify-center my-4">
+      <div className="justify-center my-4 flex">
         <span
           className={`px-4 py-2 rounded-full text-sm ${
             theme === "dark"
@@ -156,7 +158,7 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
               : "bg-white text-black"
           }`}
         >
-          {dateString}
+          {label}
         </span>
       </div>
     );
@@ -168,17 +170,16 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
         if (!message.createdAt) return acc;
 
         const date = new Date(message.createdAt);
-        if (isValidateDate(date)) {
-          const dateString = format(date, "yyyy-MM-dd");
 
-          if (!acc[dateString]) {
-            acc[dateString] = [];
-          }
+        if (!isValid(date)) return acc;
 
-          acc[dateString].push(message);
-        } else {
-          console.error("invalid date for message", message);
+        const dateKey = format(date, "yyyy-MM-dd");
+
+        if (!acc[dateKey]) {
+          acc[dateKey] = [];
         }
+
+        acc[dateKey].push(message);
 
         return acc;
       }, {})
@@ -247,31 +248,37 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
           </button>
         </div>
       </div>
+
       <div
-        className={`flex-1 p-4 overflow-y-auto ${theme === "dark" ? "bg-[#191a1a]" : "bg-[rgb(241,236,238)]"}`}
+        className={`flex-1 p-4 overflow-y-auto ${
+          theme === "dark" ? "bg-[#191a1a]" : "bg-[rgb(241,236,238)]"
+        }`}
       >
         {Object.entries(groupedMessages).map(([date, msgs]) => {
-          <React.Fragment key={date}>
-            {renderDateSeparator(new Date(date))}
-            {/* dont know where did msgs come from  */}
-            {msgs
-              .filter(
-                (msg) =>
-                  msg.conversation === selectedContact?.conversation?._id,
-              )
-              .map((msg) => {
-                <MessageBubble
-                  key={msg._id || msg.tempId}
-                  message={msg}
-                  theme={theme}
-                  currentUser={user}
-                  deleteMessage={deleteMessage}
-                />;
-              })}
-          </React.Fragment>;
+          return (
+            <React.Fragment key={date}>
+              {renderDateSeparator(date)}
+
+              {msgs
+                .filter((msg) => msg.roomId === selectedContact?.roomId)
+                .map((msg) => {
+                  return (
+                    <MessageBubble
+                      key={msg._id || msg.tempId}
+                      message={msg}
+                      theme={theme}
+                      currentUser={user}
+                      deleteMessage={deleteMessage}
+                    />
+                  );
+                })}
+            </React.Fragment>
+          );
         })}
+
         <div ref={messageScroll} />
       </div>
+
       {filePreview && (
         <div className="relative p-2">
           <img

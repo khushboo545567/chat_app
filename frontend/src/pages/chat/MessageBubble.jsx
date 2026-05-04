@@ -1,37 +1,43 @@
+import React from "react";
 import { useRef, useState } from "react";
 import { HiDotsVertical } from "react-icons/hi";
+import { FaCheck, FaCheckDouble } from "react-icons/fa";
+import { format } from "date-fns";
 
 const MessageBubble = ({ message, theme, deleteMessage, currentUser }) => {
-  console.log("this is the message", message);
   const messageRef = useRef(null);
   const [showOptions, setShowOptions] = useState(false); //user can delete the message
   const optionsRef = useRef(null);
 
-  const isUserMessage = message.sender._id === currentUser?._id;
-  const bubbleCalss = isUserMessage ? `chat-end` : `chat-start`;
-  const bubbleContentClass = isUserMessage
-    ? `chat-bubble md:max-w-[50%] min-w-[130px] bg-green-300 `
-    : `chat-bubble md:max-w-[50%] min-w-[130px] bg-white text-black`;
+  const isUserMessage = message?.sender?._id === currentUser?._id;
+  const bubbleClass = isUserMessage ? "chat-end" : "chat-start";
 
-  if (message == 0) return;
+  const bubbleContentClass = isUserMessage
+    ? "chat-bubble md:max-w-[50%] min-w-[130px] bg-green-300"
+    : "chat-bubble md:max-w-[50%] min-w-[130px] bg-white text-black";
+
+  if (!message) return null;
+
   return (
-    <div className={`chat ${bubbleCalss}`}>
+    <div className={`chat ${bubbleClass}`}>
       <div className={`${bubbleContentClass} relative group`} ref={messageRef}>
         <div className="flex justify-center gap-2">
-          {message.contentType === "text" && (
+          {message.messageType === "text" && (
             <p className="mr-2">{message.content}</p>
           )}
-          {message.contentType === "image" && (
+
+          {message.messageType === "image" && (
             <div>
               <img
-                src={imagevideourl}
-                alt="image-video"
-                className="rounded-lg max-w-xs "
+                src={message.imageOrVideoUrl}
+                alt="media"
+                className="rounded-lg max-w-xs"
               />
               <p className="mt-1">{message.content}</p>
             </div>
           )}
         </div>
+
         <div className="self-end items-center justify-end gap-1 text-xs opacity-60 mt-2 ml-2 ">
           <span>{format(new Date(message.createdAt), "HH : mm")}</span>
           {isUserMessage && (
