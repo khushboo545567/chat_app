@@ -1,92 +1,93 @@
-import React from "react";
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { HiDotsVertical } from "react-icons/hi";
 import { FaCheck, FaCheckDouble } from "react-icons/fa";
 import { format } from "date-fns";
 
-const MessageBubble = ({ message, theme, deleteMessage, currentUser }) => {
+const MessageBubble = ({ message, deleteMessage, currentUser }) => {
   const messageRef = useRef(null);
-  const [showOptions, setShowOptions] = useState(false); //user can delete the message
-  const optionsRef = useRef(null);
+  const [showOptions, setShowOptions] = useState(false);
 
   const isUserMessage = message?.sender?._id === currentUser?._id;
-  const bubbleClass = isUserMessage ? "chat-end" : "chat-start";
-
-  const bubbleContentClass = isUserMessage
-    ? "chat-bubble md:max-w-[50%] min-w-[130px] bg-green-300"
-    : "chat-bubble md:max-w-[50%] min-w-[130px] bg-white text-black";
 
   if (!message) return null;
 
   return (
-    <div className={`chat ${bubbleClass}`}>
-      <div className={`${bubbleContentClass} relative group`} ref={messageRef}>
-        <div className="flex justify-center gap-2">
-          {message.messageType === "text" && (
-            <p className="mr-2">{message.content}</p>
-          )}
+    <div
+      className={`flex mb-3 ${isUserMessage ? "justify-end" : "justify-start"}`}
+    >
+      <div
+        className={`relative px-3 py-2 rounded-xl max-w-[60%] shadow-sm ${
+          isUserMessage
+            ? "bg-green-400 text-black rounded-br-none"
+            : "bg-white text-black rounded-bl-none"
+        }`}
+        ref={messageRef}
+      >
+        {/* TEXT MESSAGE */}
+        {message.messageType === "text" && (
+          <p className="text-sm wrap-break-words">{message.content}</p>
+        )}
 
-          {message.messageType === "image" && (
-            <div>
-              <img
-                src={message.imageOrVideoUrl}
-                alt="media"
-                className="rounded-lg max-w-xs"
-              />
-              <p className="mt-1">{message.content}</p>
-            </div>
-          )}
-        </div>
+        {/* IMAGE MESSAGE */}
+        {message.messageType === "image" && (
+          <div>
+            <img
+              src={message.imageOrVideoUrl}
+              alt="media"
+              className="rounded-lg max-w-xs mb-1"
+            />
+            <p className="text-sm">{message.content}</p>
+          </div>
+        )}
 
-        <div className="self-end items-center justify-end gap-1 text-xs opacity-60 mt-2 ml-2 ">
-          <span>{format(new Date(message.createdAt), "HH : mm")}</span>
+        {/* TIME + STATUS */}
+        <div className="flex items-center justify-end gap-1 text-[10px] mt-1 opacity-70">
+          <span>{format(new Date(message.createdAt), "HH:mm")}</span>
+
           {isUserMessage && (
             <>
-              {message.messageStatus === "send" && <FaCheck size={12} />}
-              {message.messageStatus === "delivered" && (
-                <FaCheckDouble size={12} />
-              )}
-              {message.messageStatus === "read" && (
-                <FaCheckDouble size={12} className="text-blue-900" />
+              {message.status === "sent" && <FaCheck size={10} />}
+              {message.status === "delivered" && <FaCheckDouble size={10} />}
+              {message.status === "read" && (
+                <FaCheckDouble size={10} className="text-blue-600" />
               )}
             </>
           )}
         </div>
-        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+
+        {/* OPTIONS BUTTON */}
+        <div className="absolute top-1 right-1 opacity-0 hover:opacity-100 transition">
           <button
-            onClick={() => setShowOption((prev) => !prev)}
-            className={`p-1 rounded-full`}
+            onClick={() => setShowOptions((prev) => !prev)}
+            className="p-1"
           >
-            <HiDotsVertical size={18} />
+            <HiDotsVertical size={16} />
           </button>
         </div>
+
+        {/* DROPDOWN */}
         {showOptions && (
-          <div
-            ref={optionsRef}
-            className={`absolute top-8 right-1 z-50 w-36 rounded-xl shadow-lg py-2 text-sm bg-amber-200`}
-          >
+          <div className="absolute top-7 right-1 w-32 bg-white shadow-lg rounded-md text-sm z-50">
             <button
               onClick={() => {
-                if (message.contentType === "text") {
-                  Navigator.clipboard.writeText(message.content);
-                }
+                navigator.clipboard.writeText(message.content);
                 setShowOptions(false);
               }}
-              className="flex items-center w-full px-4 py-2 gap-3 rounded-lg "
+              className="block w-full text-left px-3 py-2 hover:bg-gray-100"
             >
-              <FaRegcopy size={14} />
-              <span>Copy</span>
+              Copy
             </button>
+
             {isUserMessage && (
               <button
                 onClick={() => {
-                  deleteMessage(message?._id);
+                  // call from usechatstore
+                  deleteMessage(message._id);
                   setShowOptions(false);
                 }}
-                className="flex items-center w-full px-4 py-2 gap-3 rounded-lg text-red-500"
+                className="block w-full text-left px-3 py-2 text-red-500 hover:bg-gray-100"
               >
-                <FaRegcopy className="text-red-500" size={14} />
-                <span>Delete</span>
+                Delete
               </button>
             )}
           </div>
@@ -95,4 +96,5 @@ const MessageBubble = ({ message, theme, deleteMessage, currentUser }) => {
     </div>
   );
 };
+
 export default MessageBubble;
