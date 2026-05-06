@@ -3,6 +3,9 @@ import { getSocket } from "../services/chat.service";
 import axiosInstance from "../services/url.service";
 import { Socket } from "socket.io-client";
 import { getConversation } from "../services/user.service";
+import useLayoutStore from "./useLayoutStore";
+
+// const { selectedContact } = useLayoutStore();
 
 const useChatStore = create((set, get) => ({
   conversations: [],
@@ -204,18 +207,21 @@ const useChatStore = create((set, get) => ({
   },
 
   // send message in real time
+
   sendMessage: async (formData) => {
-    const senderId = formData.get("senderId");
+    const { user } = useUserStore.getState();
+    const senderId = user?._id;
+
     const receiverId = formData.get("receiverId");
     const media = formData.get("media");
     const content = formData.get("content");
-    const messageStatus = formData.get("messageStatus");
+    const status = formData.get("messageStatus");
 
-    const socket = getSocket();
     const { conversations } = get();
 
-    let conversationId = null;
+    let roomId = null;
 
+    //  Find existing conversation
     if (conversations?.data?.length > 0) {
       const conversation = conversations.data.find(
         (conv) =>
@@ -224,29 +230,33 @@ const useChatStore = create((set, get) => ({
       );
 
       if (conversation) {
-        conversationId = conversation._id;
-        set({ currentConversation: conversationId });
+        roomId = conversation._id;
       }
     }
 
-    //  Optimistic message
+    // set current conversation AFTER finding
+    if (roomId) {
+      set({ currentConversation: roomId });
+    }
+
+    // Optimistic message
     const tempId = `temp-${Date.now()}`;
 
     const optimisticMessage = {
       _id: tempId,
       sender: { _id: senderId },
       receiver: { _id: receiverId },
-      conversation: conversationId,
+      roomId,
       imageOrVideoUrl:
         media && typeof media !== "string" ? URL.createObjectURL(media) : null,
-      content: content,
-      contentType: media
+      content,
+      messageType: media
         ? media.type.startsWith("image")
           ? "image"
           : "video"
         : "text",
       createdAt: new Date().toISOString(),
-      messageStatus,
+      status,
     };
 
     set((state) => ({
@@ -254,7 +264,7 @@ const useChatStore = create((set, get) => ({
     }));
 
     try {
-      const { data } = await axiosInstance.post("/api", formData, {
+      const { data } = await axiosInstance.post("message/send-msg", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -269,11 +279,9 @@ const useChatStore = create((set, get) => ({
 
       return messageData;
     } catch (error) {
-      console.log("Error sending message", error);
-
       set((state) => ({
         messages: state.messages.map((msg) =>
-          msg._id === tempId ? { ...msg, messageStatus: "failed" } : msg,
+          msg._id === tempId ? { ...msg, status: "failed" } : msg,
         ),
       }));
 

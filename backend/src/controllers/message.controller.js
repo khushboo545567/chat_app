@@ -78,7 +78,7 @@ const messageSend = asyncHandler(async (req, res) => {
   });
 
   // update last message in chatroom
-  await Chatroom.findByIdAndUpdate(roomId, {
+  await Chatroom.findByIdAndUpdate(chatroom._id, {
     lastMessage: message._id,
   });
 

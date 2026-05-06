@@ -109,9 +109,9 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
     setFilePreview(null);
     try {
       const formData = new FormData();
-      formData.append("senderId", user?._id);
-      formData.append("receiverId", selectedContact?._id);
-      const status = online ? "delivered" : "send";
+      formData.append("roomId", selectedContact.roomId);
+      formData.append("receiverId", receiver?._id);
+      const status = online ? "delivered" : "sent";
       formData.append("messageStatus", status);
       if (message.trim()) {
         formData.append("content", message.trim());
@@ -121,9 +121,10 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
         formData.append("media", selectedFile, selectedFile.name);
       }
       if (!message.trim() && !selectedFile) return;
-      await sendMessage(formData);
-
+      const resutt = await sendMessage(formData);
+      console.log("send message data while sending :-> ", resutt);
       // clear state cleanup function
+
       setMessage("");
       setSelectedFile(null);
       setFilePreview(null);
