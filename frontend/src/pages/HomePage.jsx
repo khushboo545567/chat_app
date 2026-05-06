@@ -2,24 +2,18 @@ import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout.jsx";
 import { motion } from "framer-motion";
 import ChatList from "./chat/ChatList.jsx";
-import { getContacts, getConversation } from "../services/user.service.js";
+import { getContacts } from "../services/user.service.js";
+import useChatStore from "../store/useChatStore.js";
 
 const Home = () => {
-  const [allUsers, setAllUsers] = useState([]);
-
-  const getConversations = async () => {
-    try {
-      const result = await getConversation();
-      if (result?.statuscode === 200) {
-        setAllUsers(result.data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const { getConversations, conversations } = useChatStore();
 
   useEffect(() => {
-    getConversations();
+    const fetchData = async () => {
+      await getConversations();
+    };
+
+    fetchData();
   }, []);
 
   return (
@@ -30,7 +24,7 @@ const Home = () => {
         transition={{ duration: 0.5 }}
         className="h-full"
       >
-        <ChatList contacts={allUsers} />
+        <ChatList contacts={conversations} />
       </motion.div>
     </Layout>
   );

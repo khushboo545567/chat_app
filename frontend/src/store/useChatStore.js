@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { getSocket } from "../services/chat.service";
 import axiosInstance from "../services/url.service";
 import { Socket } from "socket.io-client";
+import { getConversation } from "../services/user.service";
 
 const useChatStore = create((set, get) => ({
   conversations: [],
@@ -112,6 +113,7 @@ const useChatStore = create((set, get) => ({
     socket.on("user_status", ({ userId, isOnline, lastSeen }) => {
       set((state) => {
         const onlineUsers = new Map(state.onlineUsers);
+
         onlineUsers.set(userId, { isOnline, lastSeen });
         return { onlineUsers };
       });
@@ -150,13 +152,14 @@ const useChatStore = create((set, get) => ({
 
   // FETCH CONVERTATION
 
-  fetchConvertation: async () => {
+  getConversations: async () => {
     set({ loading: true, error: null });
     try {
-      const { data } = await axiosInstance.get("/auth/get-users");
-      set({ conversations: data, loading: false });
-      get().initSocketListeners();
-      return data;
+      const result = await getConversation();
+      if (result?.statuscode === 200) {
+        set({ conversations: result.data, loading: false });
+      }
+      return result.data;
     } catch (error) {
       set({
         error: error.response ? error.response.data : error.message,
@@ -387,6 +390,7 @@ const useChatStore = create((set, get) => ({
     if (!userId) {
       return null;
     }
+
     const { onlineUsers } = get();
     return onlineUsers.get(userId)?.isOnline || false;
   },
@@ -395,6 +399,7 @@ const useChatStore = create((set, get) => ({
     if (!userId) {
       return null;
     }
+
     const { onlineUsers } = get();
     return onlineUsers.get(userId)?.lastSeen || null;
   },
@@ -410,22 +415,6 @@ const useChatStore = create((set, get) => ({
       typingUsers: new Map(),
     });
   },
-
-  /* ================= HELPERS ================= */
-  //   setCurrentConversation: (conversation) =>
-  //     set({ currentConversation: conversation, messages: [] }),
-
-  //   addConversation: (conversation) =>
-  //     set((state) => ({
-  //       conversations: [...state.conversations, conversation],
-  //     })),
-
-  //   clearChat: () =>
-  //     set({
-  //       currentConversation: null,
-  //       messages: [],
-  //       typingUsers: new Map(),
-  //     }),
 }));
 
 export default useChatStore;

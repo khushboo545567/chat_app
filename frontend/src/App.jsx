@@ -20,20 +20,6 @@ function App() {
   const { setCurrenctUser, initSocketListeners, cleanup } = useChatStore();
   const { setSelectedContact } = useLayoutStore();
 
-  // useEffect(() => {
-  //   if (user?._id) {
-  //     const socket = initializeSocket();
-  //     if (socket) {
-  //       setCurrenctUser(user);
-  //       initSocketListeners();
-  //     }
-  //   }
-  //   return () => {
-  //     cleanup();
-  //     disconnectSocket();
-  //   };
-  // }, [user, setCurrenctUser]);
-
   useEffect(() => {
     if (!user?._id) return;
 

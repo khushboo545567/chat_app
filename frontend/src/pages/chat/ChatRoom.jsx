@@ -48,6 +48,7 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
   } = useChatStore();
 
   // GET ONLINE STATUS AND LAST SEEN ===========
+
   const online = isUserOnline(selectedContact?._id);
   const lastseen = getUserLastseen(selectedContact?._id);
   const isTyping = isUserTyping(selectedContact?._id);
@@ -61,16 +62,14 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
       fetchMessage(receiver._id);
     }
   }, [selectedContact]);
-  console.log("messages is here", messages);
-
-  // useEffect(() => {
-  //   fetchConvertation();
-  // }, []);
 
   // automatically scroll when user chat or message
   const scrollToBottom = () => {
     messageScroll.current?.scrollIntoView({ behaviour: "auto" });
   };
+
+  const receiver =
+    selectedContact?.participants?.find((p) => p._id !== user?._id) || null;
 
   useEffect(() => {
     scrollToBottom();
@@ -218,12 +217,15 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
           <FaArrowLeft className="" />
         </button>
         <img
-          src={selectedContact?.profilePicture}
-          alt={selectedContact?.username}
+          src={receiver?.avatar}
+          alt={receiver?.userName}
           className="w-10 h-10 rounded-full"
         />
+
         <div className="ml-3 flex flex-col grow">
-          <h2 className="font-semibold">{selectedContact?.username}</h2>
+          <h2 className="font-semibold">
+            {receiver?.userName || "Loading..."}
+          </h2>
 
           {isTyping ? (
             <div className="text-sm">Typing...</div>
@@ -231,9 +233,11 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
             <p
               className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}
             >
-              {isUserOnline
+              {/* check is user online */}
+              {/* {isUserOnline */}
+              {online
                 ? "Online"
-                : lastSeen
+                : lastseen
                   ? `last seen ${format(new Date(lastSeen), "HH:mm")}`
                   : "Offline"}
             </p>
