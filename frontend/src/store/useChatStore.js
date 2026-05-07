@@ -4,6 +4,7 @@ import axiosInstance from "../services/url.service";
 import { Socket } from "socket.io-client";
 import { getConversation } from "../services/user.service";
 import useLayoutStore from "./useLayoutStore";
+import useUserStore from "./useUserStore";
 
 // const { selectedContact } = useLayoutStore();
 
@@ -218,7 +219,7 @@ const useChatStore = create((set, get) => ({
     const status = formData.get("messageStatus");
 
     const { conversations } = get();
-
+    console.log("conversations the side list", conversations);
     let roomId = null;
 
     //  Find existing conversation
@@ -228,7 +229,7 @@ const useChatStore = create((set, get) => ({
           conv.participants.some((p) => p._id === senderId) &&
           conv.participants.some((p) => p._id === receiverId),
       );
-
+      console.log("conversation", conversation);
       if (conversation) {
         roomId = conversation._id;
       }
