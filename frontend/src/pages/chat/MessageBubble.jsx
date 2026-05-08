@@ -25,7 +25,16 @@ const MessageBubble = ({ message, deleteMessage, currentUser }) => {
       >
         {/* TEXT MESSAGE */}
         {message.messageType === "text" && (
-          <p className="text-sm wrap-break-words">{message.content}</p>
+          <div className="flex items-start gap-2">
+            <p className="text-sm wrap-break-words flex-1">{message.content}</p>
+
+            <button
+              onClick={() => setShowOptions((prev) => !prev)}
+              className="opacity-0 group-hover:opacity-100 transition p-1"
+            >
+              <HiDotsVertical size={16} />
+            </button>
+          </div>
         )}
 
         {/* IMAGE MESSAGE */}

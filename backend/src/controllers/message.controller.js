@@ -249,7 +249,24 @@ const deleteMsg = asyncHandler(async (req, res) => {
     throw new ApiError(403, "You are not allowed to delete this message");
   }
 
+  // find room
+  const room = await Chatroom.findById(msg.roomId);
+
+  // delete message
   await msg.deleteOne();
+
+  // if deleted msg was room last message
+  if (room?.lastMessage && room.lastMessage.toString() === messageId) {
+    // get latest remaining message
+    const previousMessage = await Message.findOne({
+      roomId: msg.roomId,
+    }).sort({ createdAt: -1 });
+
+    // update last message
+    room.lastMessage = previousMessage?._id || null;
+
+    await room.save();
+  }
 
   // 🔌 SOCKET.IO
   if (req.io && req.socketUserMap) {
@@ -260,13 +277,20 @@ const deleteMsg = asyncHandler(async (req, res) => {
         messageId,
         roomId: msg.roomId,
         deletedBy: userId,
+        lastMessage: room?.lastMessage || null,
       });
     }
   }
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {}, "Message deleted successfully"));
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        lastMessage: room?.lastMessage || null,
+      },
+      "Message deleted successfully",
+    ),
+  );
 });
 
 export { messageSend, getMessages, markAsRead, deleteMsg, getConversation };

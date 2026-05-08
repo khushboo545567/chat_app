@@ -341,18 +341,39 @@ const useChatStore = create((set, get) => ({
   },
 
   // ==================DELETE MESG====================
+  // deleteMessage: async (messageId) => {
+  //   try {
+  //     await axiosInstance.delete(`/message/delete-message/${messageId}`);
+
+  //     set((state) => {
+  //       messages: state.messages?.filter((msg) => {
+  //         msg?._id !== messageId;
+  //       });
+  //     });
+  //     return true;
+  //   } catch (error) {
+  //     console.error("error deleting message", error);
+  //     set({ error: error.response?.data?.message || error.message });
+  //     return false;
+  //   }
+  // },
+
   deleteMessage: async (messageId) => {
     try {
-      await axiosInstance.delete("/api");
-      set((state) => {
-        messages: state.messages?.filter((msg) => {
-          msg?._id !== messageId;
-        });
-      });
+      await axiosInstance.delete(`/message/delete-message/${messageId}`);
+
+      set((state) => ({
+        messages: state.messages?.filter((msg) => msg?._id !== messageId),
+      }));
+
       return true;
     } catch (error) {
       console.error("error deleting message", error);
-      set({ error: error.response?.data?.message || error.message });
+
+      set({
+        error: error.response?.data?.message || error.message,
+      });
+
       return false;
     }
   },
