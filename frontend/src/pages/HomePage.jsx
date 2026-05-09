@@ -6,7 +6,7 @@ import { getContacts } from "../services/user.service.js";
 import useChatStore from "../store/useChatStore.js";
 
 const Home = () => {
-  const { getConversations, conversations } = useChatStore();
+  const { getConversations, conversations, messages } = useChatStore();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -14,7 +14,7 @@ const Home = () => {
     };
 
     fetchData();
-  }, []);
+  }, [messages]);
 
   return (
     <Layout>

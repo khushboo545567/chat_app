@@ -12,6 +12,7 @@ const Layout = ({
   toggleThemeDialog,
   isStatusPreviewOpen,
   statusPreviewContent,
+  showChatRoom = true,
 }) => {
   const selectedContact = useLayoutStore((state) => state.selectedContact);
   const setSelectedContact = useLayoutStore(
@@ -37,37 +38,41 @@ const Layout = ({
       {!isMobile && <Sidebar />}
 
       <div className="flex-1 flex overflow-hidden">
-        <AnimatePresence initial={false}>
-          {(!selectedContact || !isMobile) && (
-            <motion.div
-              key="chatlist"
-              initial={{ x: isMobile ? "-100%" : 0 }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "tween" }}
-              className="w-full md:w-2/5"
-            >
-              {children}
-            </motion.div>
-          )}
+        {showChatRoom ? (
+          <AnimatePresence initial={false}>
+            {(!selectedContact || !isMobile) && (
+              <motion.div
+                key="chatlist"
+                initial={{ x: isMobile ? "-100%" : 0 }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "tween" }}
+                className="w-full md:w-2/5"
+              >
+                {children}
+              </motion.div>
+            )}
 
-          {(selectedContact || !isMobile) && (
-            <motion.div
-              key="chatroom"
-              initial={{ x: isMobile ? "100%" : 0 }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "tween" }}
-              className="w-full"
-            >
-              <ChatRoom
-                selectedContact={selectedContact}
-                isMobile={isMobile}
-                setSelectedContact={setSelectedContact}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+            {(selectedContact || !isMobile) && (
+              <motion.div
+                key="chatroom"
+                initial={{ x: isMobile ? "100%" : 0 }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "tween" }}
+                className="w-full"
+              >
+                <ChatRoom
+                  selectedContact={selectedContact}
+                  isMobile={isMobile}
+                  setSelectedContact={setSelectedContact}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        ) : (
+          <div className="w-full">{children}</div>
+        )}
       </div>
 
       {isMobile && <Sidebar />}
