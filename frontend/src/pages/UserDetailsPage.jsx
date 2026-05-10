@@ -5,6 +5,8 @@ import useThemeStore from "../store/useThemeStore";
 import { toast } from "react-toastify";
 import axiosInstance from "../services/url.service";
 import { FaEdit, FaCamera, FaSave } from "react-icons/fa";
+import Spinner from "../utils/Spinner";
+import Loader from "../utils/Loder";
 
 const UserDetails = () => {
   const { user, setUser } = useUserStore();
@@ -17,6 +19,7 @@ const UserDetails = () => {
   const [previewImage, setPreviewImage] = useState(user?.avatar || "");
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingAbout, setIsEditingAbout] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -30,6 +33,7 @@ const UserDetails = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      setLoading(true);
       const formData = new FormData();
       formData.append("userName", userName);
       formData.append("about", about);
@@ -54,6 +58,8 @@ const UserDetails = () => {
     } catch (error) {
       console.error(error);
       toast.error("Failed to update profile");
+    } finally {
+      setLoading(false);
     }
   };
   return (
@@ -153,10 +159,9 @@ const UserDetails = () => {
             {/* Save Button */}
             <button
               type="submit"
-              className="w-full bg-green-500 hover:bg-green-600 transition p-4 rounded-lg text-white font-semibold flex items-center justify-center gap-2"
+              className={`w-full bg-green-500 text-white font-bold py-3 px-4 rounded-md transition duration-300 ease-in-out transform hover:scale-105 items-center justify-center text-lg ${loading ? "opacity-50 cursor-not-allowed" : " "}`}
             >
-              <FaSave />
-              Save Changes
+              {loading ? <Spinner /> : "Save Changes"}
             </button>
           </form>
         </div>

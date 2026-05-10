@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
       sparse: true,
+      default: undefined,
     },
 
     phoneSuffix: {
@@ -22,6 +23,7 @@ const userSchema = new mongoose.Schema(
       sparse: true,
       unique: true,
       lowercase: true,
+      default: undefined,
       match: [/^\S+@\S+\.\S+$/, "Invalid email address"],
     },
 
