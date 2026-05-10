@@ -35,7 +35,7 @@ function App() {
       setSelectedContact(null);
       disconnectSocket();
     };
-  }, [user?._id]);
+  }, [user?._id, user]);
 
   return (
     <>

@@ -80,6 +80,7 @@ const getConversation = async () => {
     console.log(error);
   }
 };
+
 export {
   sendOtp,
   verifyOtp,
@@ -88,5 +89,6 @@ export {
   logoutUser,
   getContacts,
   getConversation,
+
   // clear user
 };
