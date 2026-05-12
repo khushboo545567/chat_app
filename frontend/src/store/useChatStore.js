@@ -6,8 +6,6 @@ import { getConversation } from "../services/user.service";
 import useLayoutStore from "./useLayoutStore";
 import useUserStore from "./useUserStore";
 
-// const { selectedContact } = useLayoutStore();
-
 const useChatStore = create((set, get) => ({
   conversations: [],
   currentConversation: null,
@@ -33,6 +31,21 @@ const useChatStore = create((set, get) => ({
     socket.off("message_status_updated");
     socket.off("user_typing");
     socket.off("user_status");
+
+    socket.on("online_users", (users) => {
+      set((state) => {
+        const onlineUsers = new Map(state.onlineUsers);
+
+        users.forEach((userId) => {
+          onlineUsers.set(userId, {
+            isOnline: true,
+            lastSeen: null,
+          });
+        });
+
+        return { onlineUsers };
+      });
+    });
 
     /* ================= RECEIVE MESSAGE ================= */
     socket.on("receive_message", (message) => {
@@ -108,7 +121,6 @@ const useChatStore = create((set, get) => ({
         } else {
           typingUsers.set(conversationId, usersSet);
         }
-
         return { typingUsers };
       });
     });
@@ -119,6 +131,7 @@ const useChatStore = create((set, get) => ({
         const onlineUsers = new Map(state.onlineUsers);
 
         onlineUsers.set(userId, { isOnline, lastSeen });
+        console.log(onlineUsers);
         return { onlineUsers };
       });
     });
@@ -127,20 +140,22 @@ const useChatStore = create((set, get) => ({
     const { conversations } = get();
     if (conversations?.data?.length > 0) {
       conversations.data.forEach((conv) => {
-        const otherUsers = conv.participants.find((p) => {
-          p._id !== get().currentUser._id;
-        });
+        const otherUsers = conv.participants.find(
+          (p) => p._id !== get().currentUser._id,
+        );
         if (otherUsers._id) {
           socket.emit("get_user_status", otherUsers._id, (status) => {
-            set((set) => {
+            set((state) => {
               const newOnlineUser = new Map(state.onlineUsers);
-              newOnlineUser.set(
-                set(state.userId, {
-                  isOnline: state.isOnline,
-                  lastSeen: state.lastSeen,
-                }),
-              );
-              return { onlineUsers: newOnlineUser };
+
+              newOnlineUser.set(status.userId, {
+                isOnline: status.isOnline,
+                lastSeen: status.lastSeen,
+              });
+
+              return {
+                onlineUsers: newOnlineUser,
+              };
             });
           });
         }
@@ -190,9 +205,15 @@ const useChatStore = create((set, get) => ({
 
         // currentConversation: conversationId,
         // store the full conversation object so _id comparison works in socket listener
-        currentConversation: { _id: data.data[0]?.roomId },
+        currentConversation: data.data?.length
+          ? { _id: data.data[0].roomId }
+          : null,
         loading: false,
       });
+
+      setTimeout(() => {
+        get().MarkMsgsAsRead();
+      }, 0);
 
       //mark as read message
       // const { MarkMsgsAsRead } = get();
@@ -257,7 +278,7 @@ const useChatStore = create((set, get) => ({
           : "video"
         : "text",
       createdAt: new Date().toISOString(),
-      status,
+      status: "sent",
     };
 
     set((state) => ({
@@ -268,8 +289,13 @@ const useChatStore = create((set, get) => ({
       const { data } = await axiosInstance.post("message/send-msg", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      const messageData = data.data;
+      // EMIT SOCKET EVENT
+      const socket = getSocket();
 
-      const messageData = data.data || data;
+      if (socket) {
+        socket.emit("send_message", messageData);
+      }
 
       // Replace temp message
       set((state) => ({
@@ -277,7 +303,6 @@ const useChatStore = create((set, get) => ({
           msg._id === tempId ? messageData : msg,
         ),
       }));
-
       return messageData;
     } catch (error) {
       set((state) => ({
@@ -303,35 +328,35 @@ const useChatStore = create((set, get) => ({
   //   if (messageExist) return;
   // },
 
-  // ============= MARK AS READ ================
   MarkMsgsAsRead: async () => {
     const { messages, currentUser } = get();
-    if ((!messages.length, !currentUser)) {
+
+    if (!messages.length || !currentUser) {
       return;
     }
+
     const unreadIds = messages
       .filter(
-        (msg) =>
-          msg.messageStatus !== "read" && msg.receiver._id === currentUser._id,
+        (msg) => msg.status !== "read" && msg.receiver?._id === currentUser._id,
       )
-      .map((msg) => msg._id)
-      .filter(Boolean);
+      .map((msg) => msg._id);
+
     if (unreadIds.length === 0) {
       return;
     }
+
     try {
-      const { data } = await axiosInstance.put("/api", {
-        messageId: unreadIds,
-      });
       set((state) => ({
-        messages: state.messages.map((msg) => {
-          unreadIds.includes(msg._id) ? { ...msg, messageStatus: "read" } : msg;
-        }),
+        messages: state.messages.map((msg) =>
+          unreadIds.includes(msg._id) ? { ...msg, status: "read" } : msg,
+        ),
       }));
+
       const socket = getSocket();
+
       if (socket) {
         socket.emit("message_read", {
-          messageId: unreadIds,
+          messageIds: unreadIds,
           senderId: messages[0]?.sender?._id,
         });
       }
@@ -383,7 +408,7 @@ const useChatStore = create((set, get) => ({
     const { currentConversation } = get();
     const socket = getSocket();
     if (socket && currentConversation && receiverId) {
-      socket.emit("Typing_Start", {
+      socket.emit("typing", {
         conversationId: currentConversation,
         receiverId,
       });
@@ -395,7 +420,7 @@ const useChatStore = create((set, get) => ({
     const { currentConversation } = get();
     const socket = getSocket();
     if (socket && currentConversation && receiverId) {
-      socket.emit(" typing_stop", {
+      socket.emit("typing_stop", {
         conversationId: currentConversation,
         receiverId,
       });

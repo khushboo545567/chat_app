@@ -82,20 +82,25 @@ const messageSend = asyncHandler(async (req, res) => {
     lastMessage: message._id,
   });
 
-  const populatedMessage = await Message.findById(message._id)
-    .populate("sender", "username avatar")
-    .populate("receiver", "username avatar");
-
   // 🔌 SOCKET.IO PART
   if (req.io && req.socketUserMap) {
     const receiverSocketId = req.socketUserMap.get(receiverId);
 
     if (receiverSocketId) {
-      req.io.to(receiverSocketId).emit("new_message", populatedMessage);
       message.status = "delivered";
       await message.save();
+
+      const updatedMessage = await Message.findById(message._id)
+        .populate("sender", "username avatar")
+        .populate("receiver", "username avatar");
+
+      req.io.to(receiverSocketId).emit("receive_message", updatedMessage);
     }
   }
+
+  const populatedMessage = await Message.findById(message._id)
+    .populate("sender", "username avatar")
+    .populate("receiver", "username avatar");
 
   return res
     .status(200)

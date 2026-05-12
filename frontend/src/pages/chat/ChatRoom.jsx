@@ -48,10 +48,14 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
   } = useChatStore();
 
   // GET ONLINE STATUS AND LAST SEEN ===========
-
-  const online = isUserOnline(selectedContact?._id);
-  const lastseen = getUserLastseen(selectedContact?._id);
-  const isTyping = isUserTyping(selectedContact?._id);
+  const receiver =
+    selectedContact?.participants?.find((p) => p._id !== user?._id) || null;
+  console.log(selectedContact);
+  const online = isUserOnline(receiver?._id);
+  const lastseen = getUserLastseen(receiver?._id);
+  const isTyping = isUserTyping(receiver?._id);
+  console.log("Online user is", online);
+  console.log("selected contact receiver", receiver);
 
   useEffect(() => {
     if (selectedContact?.roomId) {
@@ -65,11 +69,8 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
 
   // automatically scroll when user chat or message
   const scrollToBottom = () => {
-    messageScroll.current?.scrollIntoView({ behaviour: "auto" });
+    messageScroll.current?.scrollIntoView({ behavior: "auto" });
   };
-
-  const receiver =
-    selectedContact?.participants?.find((p) => p._id !== user?._id) || null;
 
   useEffect(() => {
     scrollToBottom();
@@ -105,17 +106,19 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
 
   // send message
   const handleSendMessage = async () => {
-    if (!setSelectedContact) return;
+    if (!selectedContact) return;
     setFilePreview(null);
+    console.log("handle message");
     try {
       const formData = new FormData();
       formData.append("roomId", selectedContact.roomId);
       formData.append("receiverId", receiver?._id);
-      const status = online ? "delivered" : "sent";
-      formData.append("messageStatus", status);
+      // const status = online ? "delivered" : "sent";
+      // formData.append("messageStatus", status);
       if (message.trim()) {
         formData.append("content", message.trim());
       }
+      console.log("handle message");
       // accept file if there is any
       if (selectedFile) {
         formData.append("media", selectedFile, selectedFile.name);
@@ -239,7 +242,7 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
               {online
                 ? "Online"
                 : lastseen
-                  ? `last seen ${format(new Date(lastSeen), "HH:mm")}`
+                  ? `last seen ${format(new Date(lastseen), "HH:mm")}`
                   : "Offline"}
             </p>
           )}
@@ -339,7 +342,7 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={(e) => {
+          onKeyDown={(e) => {
             if (e.key === "Enter") {
               handleSendMessage();
             }

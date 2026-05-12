@@ -6,7 +6,7 @@ import { format } from "date-fns";
 const MessageBubble = ({ message, deleteMessage, currentUser }) => {
   const messageRef = useRef(null);
   const [showOptions, setShowOptions] = useState(false);
-
+  console.log("messages form messsagebubble", message);
   const isUserMessage = message?.sender?._id === currentUser?._id;
 
   if (!message) return null;

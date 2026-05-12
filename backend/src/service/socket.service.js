@@ -27,6 +27,7 @@ const inilizeSocket = (server) => {
       try {
         userId = connectingUserId;
         onlineUsers.set(userId, socket.id);
+
         socket.join(userId);
 
         await User.findByIdAndUpdate(userId, {
@@ -34,6 +35,10 @@ const inilizeSocket = (server) => {
           lastSeen: new Date(),
         });
 
+        // send all currently online users to newly connected user
+        socket.emit("online_users", Array.from(onlineUsers.keys()));
+
+        // notify everyone that this user came online
         io.emit("user_status", {
           userId,
           isOnline: true,
@@ -68,13 +73,19 @@ const inilizeSocket = (server) => {
       }
     });
 
-    /* ---------------- SEND MESSAGE ---------------- */
     socket.on("send_message", async (message) => {
       try {
         const receiverSocketId = onlineUsers.get(message.receiver._id);
 
         if (receiverSocketId) {
-          io.to(receiverSocketId).emit("receive_message", message);
+          await Message.findByIdAndUpdate(message._id, {
+            status: "delivered",
+          });
+
+          io.to(receiverSocketId).emit("receive_message", {
+            ...message,
+            status: "delivered",
+          });
 
           socket.emit("message_status", {
             messageId: message._id,
