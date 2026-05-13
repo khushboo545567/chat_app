@@ -10,49 +10,123 @@ import uploadOnCloudinary from "../utils/cloudinary.js";
 import { Chatroom } from "../models/chatroom.model.js";
 
 // REGISTER AND LOGIN DONE
+// const sendOtp = asyncHandler(async (req, res) => {
+//   const { phoneNumber, phoneSuffix, email } = req.body;
+//   const otp = optGenerate();
+//   const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
+
+//   if (!phoneNumber && !email) {
+//     return res.status(400).json(new ApiError(400, "All fields are required"));
+//   }
+
+//   if (email) {
+//     let user = await User.findOne({ email });
+//     if (!user) {
+//       user = await User.create({ email });
+//     }
+
+//     user.emailOtp = otp;
+//     user.emailOtpExpiry = otpExpiry;
+//     await user.save();
+
+//     await sendOtpEmail(email, otp);
+
+//     return res
+//       .status(200)
+//       .json(new ApiResponse(200, user, `OTP is sent to your email ${email}`));
+//   } else {
+//     if (!phoneNumber || !phoneSuffix) {
+//       return res
+//         .status(400)
+//         .json(new ApiError(400, "Phone number and phone suffix are required"));
+//     }
+
+//     const fullNumber = `${phoneSuffix}${phoneNumber}`;
+//     let user = await User.findOne({ phoneNumber, phoneSuffix });
+//     if (!user) {
+//       user = await User.create({ phoneNumber, phoneSuffix });
+//     }
+
+//     await sendOtpToPhoneNumber(fullNumber);
+
+//     return res
+//       .status(200)
+//       .json(new ApiResponse(200, user, "OTP sent to your mobile number"));
+//   }
+// });
+
 const sendOtp = asyncHandler(async (req, res) => {
   const { phoneNumber, phoneSuffix, email } = req.body;
+
+  if (!phoneNumber && !email) {
+    throw new ApiError(400, "Email or phone number is required");
+  }
+
+  if (email && phoneNumber) {
+    throw new ApiError(400, "Use either email or phone number");
+  }
+
   const otp = optGenerate();
   const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
 
-  if (!phoneNumber && !email) {
-    return res.status(400).json(new ApiError(400, "All fields are required"));
-  }
-
+  // EMAIL LOGIN
   if (email) {
     let user = await User.findOne({ email });
+
     if (!user) {
       user = await User.create({ email });
     }
 
     user.emailOtp = otp;
     user.emailOtpExpiry = otpExpiry;
+
     await user.save();
 
     await sendOtpEmail(email, otp);
 
-    return res
-      .status(200)
-      .json(new ApiResponse(200, user, `OTP is sent to your email ${email}`));
-  } else {
-    if (!phoneNumber || !phoneSuffix) {
-      return res
-        .status(400)
-        .json(new ApiError(400, "Phone number and phone suffix are required"));
-    }
-
-    const fullNumber = `${phoneSuffix}${phoneNumber}`;
-    let user = await User.findOne({ phoneNumber, phoneSuffix });
-    if (!user) {
-      user = await User.create({ phoneNumber, phoneSuffix });
-    }
-
-    await sendOtpToPhoneNumber(fullNumber);
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, user, "OTP sent to your mobile number"));
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          _id: user._id,
+          email: user.email,
+        },
+        `OTP sent to ${email}`,
+      ),
+    );
   }
+
+  // PHONE LOGIN
+  if (!phoneSuffix) {
+    throw new ApiError(400, "Phone suffix is required");
+  }
+
+  const fullNumber = `${phoneSuffix}${phoneNumber}`;
+
+  let user = await User.findOne({
+    phoneNumber,
+    phoneSuffix,
+  });
+
+  if (!user) {
+    user = await User.create({
+      phoneNumber,
+      phoneSuffix,
+    });
+  }
+
+  await sendOtpToPhoneNumber(fullNumber);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        _id: user._id,
+        phoneNumber: user.phoneNumber,
+      },
+      "OTP sent to mobile number",
+    ),
+  );
 });
 
 const verifyOtp = asyncHandler(async (req, res) => {

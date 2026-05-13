@@ -10,9 +10,13 @@ import mongoose from "mongoose";
 const messageSend = asyncHandler(async (req, res) => {
   const senderId = req.user.userId;
   const { receiverId, content, roomId } = req.body;
-
+  console.log("sender id ", senderId);
   if (!senderId || !receiverId) {
     throw new ApiError(400, "senderId, receiverId and roomId are required");
+  }
+
+  if (senderId.toString() === receiverId.toString()) {
+    throw new ApiError(400, "Sender cannot send message to themselves");
   }
 
   let chatroom;
@@ -77,30 +81,28 @@ const messageSend = asyncHandler(async (req, res) => {
     messageType,
   });
 
-  // update last message in chatroom
+  // update last message
   await Chatroom.findByIdAndUpdate(chatroom._id, {
     lastMessage: message._id,
   });
 
-  // 🔌 SOCKET.IO PART
-  if (req.io && req.socketUserMap) {
-    const receiverSocketId = req.socketUserMap.get(receiverId);
+  // check receiver online
+  const receiverSocketId = req.socketUserMap?.get(receiverId);
 
-    if (receiverSocketId) {
-      message.status = "delivered";
-      await message.save();
-
-      const updatedMessage = await Message.findById(message._id)
-        .populate("sender", "username avatar")
-        .populate("receiver", "username avatar");
-
-      req.io.to(receiverSocketId).emit("receive_message", updatedMessage);
-    }
+  if (receiverSocketId) {
+    message.status = "delivered";
+    await message.save();
   }
 
+  // populate once only
   const populatedMessage = await Message.findById(message._id)
     .populate("sender", "username avatar")
     .populate("receiver", "username avatar");
+
+  // emit if online
+  if (receiverSocketId) {
+    req.io.to(receiverSocketId).emit("receive_message", populatedMessage);
+  }
 
   return res
     .status(200)

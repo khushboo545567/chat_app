@@ -50,11 +50,6 @@ const useChatStore = create((set, get) => ({
     /* ================= RECEIVE MESSAGE ================= */
     socket.on("receive_message", (message) => {
       const { currentConversation } = get();
-
-      // add message only if it belongs to open conversation
-      // if (currentConversation?._id === message.roomId) {
-
-      // currentConversation is always a full object now
       if (
         currentConversation?._id === message.roomId ||
         currentConversation === message.roomId
@@ -202,9 +197,6 @@ const useChatStore = create((set, get) => ({
       const messageArray = data.data || [];
       set({
         messages: messageArray,
-
-        // currentConversation: conversationId,
-        // store the full conversation object so _id comparison works in socket listener
         currentConversation: data.data?.length
           ? { _id: data.data[0].roomId }
           : null,
@@ -214,11 +206,6 @@ const useChatStore = create((set, get) => ({
       setTimeout(() => {
         get().MarkMsgsAsRead();
       }, 0);
-
-      //mark as read message
-      // const { MarkMsgsAsRead } = get();
-      // MarkMsgsAsRead();
-      // return messageArray;
     } catch (error) {
       set({
         error: error.response ? error.response.data : error.message,
@@ -364,24 +351,6 @@ const useChatStore = create((set, get) => ({
       console.error("failed to mark messages as read", error);
     }
   },
-
-  // ==================DELETE MESG====================
-  // deleteMessage: async (messageId) => {
-  //   try {
-  //     await axiosInstance.delete(`/message/delete-message/${messageId}`);
-
-  //     set((state) => {
-  //       messages: state.messages?.filter((msg) => {
-  //         msg?._id !== messageId;
-  //       });
-  //     });
-  //     return true;
-  //   } catch (error) {
-  //     console.error("error deleting message", error);
-  //     set({ error: error.response?.data?.message || error.message });
-  //     return false;
-  //   }
-  // },
 
   deleteMessage: async (messageId) => {
     try {
