@@ -48,21 +48,39 @@ const useChatStore = create((set, get) => ({
     });
 
     /* ================= RECEIVE MESSAGE ================= */
+
     socket.on("receive_message", (message) => {
-      const { currentConversation } = get();
-      if (
-        currentConversation?._id === message.roomId ||
-        currentConversation === message.roomId
-      ) {
+      const { currentConversation, currentUser } = get();
+
+      // add message to UI
+      if (currentConversation === message.roomId) {
         set((state) => ({
           messages: [...state.messages, message],
         }));
+
+        // instantly mark as read
+        if (message.receiver?._id === currentUser?._id) {
+          const socket = getSocket();
+
+          // update local state immediately
+          set((state) => ({
+            messages: state.messages.map((msg) =>
+              msg._id === message._id ? { ...msg, status: "read" } : msg,
+            ),
+          }));
+
+          // notify sender
+          socket.emit("message_read", {
+            messageIds: [message._id],
+            senderId: message.sender?._id,
+          });
+        }
       }
 
-      // update lastMessage in conversations
+      // update conversation last message
       set((state) => ({
         conversations: state.conversations.map((conv) =>
-          conv._id === message.roomId
+          conv.roomId === message.roomId
             ? { ...conv, lastMessage: message }
             : conv,
         ),
@@ -88,10 +106,27 @@ const useChatStore = create((set, get) => ({
     });
 
     // ==================DELETE MSG=======================
-    socket.on("message_deleted", ({ deletedMessageId }) => {
-      set((state) => ({
-        messages: state.messages.filter((msg) => msg._id !== deletedMessageId),
-      }));
+
+    socket.on("message_deleted", ({ messageId, roomId, lastMessage }) => {
+      set((state) => {
+        const updatedMessages = state.messages.filter(
+          (msg) => msg._id !== messageId,
+        );
+
+        const updatedConversations = state.conversations.map((conv) =>
+          conv._id === roomId
+            ? {
+                ...conv,
+                lastMessage,
+              }
+            : conv,
+        );
+
+        return {
+          messages: updatedMessages,
+          conversations: updatedConversations,
+        };
+      });
     });
 
     // ======== HANDLING ANY ERROR WHILE SENDING MSG ========
@@ -133,8 +168,8 @@ const useChatStore = create((set, get) => ({
 
     // ==============EMIT STATUS CHECK FOR ALL USERS IN CONVERSTATIONS LIST ===========
     const { conversations } = get();
-    if (conversations?.data?.length > 0) {
-      conversations.data.forEach((conv) => {
+    if (conversations?.length > 0) {
+      conversations.forEach((conv) => {
         const otherUsers = conv.participants.find(
           (p) => p._id !== get().currentUser._id,
         );
@@ -171,7 +206,7 @@ const useChatStore = create((set, get) => ({
     try {
       const result = await getConversation();
       if (result?.statuscode === 200) {
-        set({ conversations: result.data, loading: false });
+        set({ conversations: result.data || [], loading: false });
       }
       return result.data;
     } catch (error) {
@@ -184,7 +219,7 @@ const useChatStore = create((set, get) => ({
   },
 
   // FETCH MESSAGE FOR A CONVERTATION
-  fetchMessage: async (receiverId) => {
+  fetchMessage: async (receiverId, roomId) => {
     if (!receiverId) {
       return;
     }
@@ -197,15 +232,11 @@ const useChatStore = create((set, get) => ({
       const messageArray = data.data || [];
       set({
         messages: messageArray,
-        currentConversation: data.data?.length
-          ? { _id: data.data[0].roomId }
-          : null,
+        currentConversation: roomId,
         loading: false,
       });
 
-      setTimeout(() => {
-        get().MarkMsgsAsRead();
-      }, 0);
+      await get().MarkMsgsAsRead();
     } catch (error) {
       set({
         error: error.response ? error.response.data : error.message,
@@ -227,17 +258,17 @@ const useChatStore = create((set, get) => ({
     const status = formData.get("messageStatus");
 
     const { conversations } = get();
-    console.log("conversations the side list", conversations);
+
     let roomId = null;
 
     //  Find existing conversation
-    if (conversations?.data?.length > 0) {
-      const conversation = conversations.data.find(
+    if (conversations?.length > 0) {
+      const conversation = conversations.find(
         (conv) =>
           conv.participants.some((p) => p._id === senderId) &&
           conv.participants.some((p) => p._id === receiverId),
       );
-      console.log("conversation", conversation);
+
       if (conversation) {
         roomId = conversation._id;
       }
@@ -301,20 +332,6 @@ const useChatStore = create((set, get) => ({
       throw error;
     }
   },
-
-  // reseive message
-
-  // receiveMessage is now handled entirely inside initSocketListeners
-  // via the "receive_message" socket event — no separate action needed
-
-  // receiveMessage: async (message) => {
-  //   if (!message) return;
-  //   // where do i get current user form
-  //   const { currentConversation, currentUser, messages } = get();
-  //   const messageExist = message.some((msg) => msg._id === message._id);
-  //   if (messageExist) return;
-  // },
-
   MarkMsgsAsRead: async () => {
     const { messages, currentUser } = get();
 
@@ -360,6 +377,9 @@ const useChatStore = create((set, get) => ({
         messages: state.messages?.filter((msg) => msg?._id !== messageId),
       }));
 
+      const response = await axiosInstance.delete(
+        `/message/delete-message/${messageId}`,
+      );
       return true;
     } catch (error) {
       console.error("error deleting message", error);

@@ -87,12 +87,12 @@ const messageSend = asyncHandler(async (req, res) => {
   });
 
   // check receiver online
-  const receiverSocketId = req.socketUserMap?.get(receiverId);
+  // const receiverSocketId = req.socketUserMap?.get(receiverId);
 
-  if (receiverSocketId) {
-    message.status = "delivered";
-    await message.save();
-  }
+  // if (receiverSocketId) {
+  //   message.status = "delivered";
+  //   await message.save();
+  // }
 
   // populate once only
   const populatedMessage = await Message.findById(message._id)
@@ -100,9 +100,9 @@ const messageSend = asyncHandler(async (req, res) => {
     .populate("receiver", "username avatar");
 
   // emit if online
-  if (receiverSocketId) {
-    req.io.to(receiverSocketId).emit("receive_message", populatedMessage);
-  }
+  // if (receiverSocketId) {
+  //   req.io.to(receiverSocketId).emit("receive_message", populatedMessage);
+  // }
 
   return res
     .status(200)

@@ -13,6 +13,8 @@ import {
   FaPaperclip,
   FaFile,
   FaPaperPlane,
+  FaTimes,
+  FaImage,
 } from "react-icons/fa";
 
 const isValidateDate = (date) => {
@@ -50,12 +52,10 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
   // GET ONLINE STATUS AND LAST SEEN ===========
   const receiver =
     selectedContact?.participants?.find((p) => p._id !== user?._id) || null;
-  console.log(selectedContact);
+
   const online = isUserOnline(receiver?._id);
   const lastseen = getUserLastseen(receiver?._id);
   const isTyping = isUserTyping(receiver?._id);
-  console.log("Online user is", online);
-  console.log("selected contact receiver", receiver);
 
   useEffect(() => {
     if (selectedContact?.roomId) {
@@ -63,7 +63,7 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
         (r) => r._id !== user._id,
       );
 
-      fetchMessage(receiver._id);
+      fetchMessage(receiver._id, selectedContact.roomId);
     }
   }, [selectedContact]);
 
@@ -76,22 +76,38 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
     scrollToBottom();
   }, [messages]);
 
+  // useEffect(() => {
+  //   if (message && selectedContact) {
+  //     startTyping(receiver?._id);
+  //     if (typingTimerOutRef.current) {
+  //       clearTimeout(typingTimerOutRef.current);
+  //     }
+  //     typingTimerOutRef.current = setTimeout(() => {
+  //       stopTyping(receiver?._id);
+  //     }, 2000);
+  //   }
+  //   return () => {
+  //     if (typingTimerOutRef.current) {
+  //       clearTimeout(typingTimerOutRef.current);
+  //     }
+  //   };
+  // }, [message, selectedContact, startTyping, stopTyping]);
+
   useEffect(() => {
-    if (message && selectedContact) {
-      startTyping(selectedContact._id);
-      if (typingTimerOutRef.current) {
-        clearTimeout(typingTimerOutRef.current);
-      }
-      typingTimerOutRef.current = setTimeout(() => {
-        stopTyping(selectedContact._id);
-      }, 2000);
+    if (!selectedContact || !message.trim()) return;
+
+    startTyping(receiver?._id);
+
+    if (typingTimerOutRef.current) {
+      clearTimeout(typingTimerOutRef.current);
     }
-    return () => {
-      if (typingTimerOutRef.current) {
-        clearTimeout(typingTimerOutRef.current);
-      }
-    };
-  }, [message, selectedContact, startTyping, stopTyping]);
+
+    typingTimerOutRef.current = setTimeout(() => {
+      stopTyping(receiver?._id);
+    }, 2000);
+
+    return () => clearTimeout(typingTimerOutRef.current);
+  }, [message]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -108,7 +124,7 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
   const handleSendMessage = async () => {
     if (!selectedContact) return;
     setFilePreview(null);
-    console.log("handle message");
+
     try {
       const formData = new FormData();
       formData.append("roomId", selectedContact.roomId);
@@ -118,16 +134,16 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
       if (message.trim()) {
         formData.append("content", message.trim());
       }
-      console.log("handle message");
+
       // accept file if there is any
       if (selectedFile) {
         formData.append("media", selectedFile, selectedFile.name);
       }
       if (!message.trim() && !selectedFile) return;
       const resutt = await sendMessage(formData);
-      console.log("send message data while sending :-> ", resutt);
-      // clear state cleanup function
 
+      // stop typing indicator
+      stopTyping(receiver?._id);
       setMessage("");
       setSelectedFile(null);
       setFilePreview(null);
@@ -290,7 +306,7 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
       {filePreview && (
         <div className="relative p-2">
           <img
-            src={fileprew_image_link}
+            src={filePreview}
             alt=""
             className="w-80 object-cover rounded shadow-lg mx-auto"
           />
@@ -301,7 +317,7 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
             }}
             className="absolute top-1 right-1 bg-red-500 hover:red-600 text-white rounded-full p-1"
           >
-            <Fatimes className="h-4 w-4 " />
+            <FaTimes className="h-4 w-4 " />
           </button>
         </div>
       )}
@@ -350,7 +366,10 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
           placeholder="Type a message"
           className={`grow px-4 py-2 border rounded-full focus:outline-none focus:ring-green-500`}
         />
-        <button onClick={handleFileChange} className="focus:outline-none">
+        <button
+          onClick={() => handleSendMessage()}
+          className="focus:outline-none"
+        >
           <FaPaperPlane className="h-6 w-6" />
         </button>
       </div>

@@ -149,7 +149,7 @@ const inilizeSocket = (server) => {
         });
       }, 3000);
 
-      socket.to(receiverId).emit("user_typing", {
+      io.to(receiverId).emit("user_typing", {
         userId,
         conversationId,
         isTyping: true,
@@ -170,7 +170,7 @@ const inilizeSocket = (server) => {
         }
       }
 
-      socket.to(receiverId).emit("user_typing", {
+      io.to(receiverId).emit("user_typing", {
         userId,
         conversationId,
         isTyping: false,
@@ -186,7 +186,13 @@ const inilizeSocket = (server) => {
 
         if (typingUsers.has(userId)) {
           const userTyping = typingUsers.get(userId);
-          Object.values(userTyping).forEach((t) => clearTimeout(t));
+          // Object.values(userTyping).forEach((t) => clearTimeout(t));
+          Object.keys(userTyping).forEach((key) => {
+            if (key.includes("_timeout")) {
+              clearTimeout(userTyping[key]);
+            }
+          });
+
           typingUsers.delete(userId);
         }
 
