@@ -47,6 +47,7 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
     cleanup,
     deleteMessage,
     conversations,
+    MarkMsgsAsRead,
   } = useChatStore();
 
   // GET ONLINE STATUS AND LAST SEEN ===========
@@ -73,25 +74,16 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
   };
 
   useEffect(() => {
-    scrollToBottom();
+    if (!selectedContact?.roomId || !messages.length) {
+      return;
+    }
+
+    MarkMsgsAsRead();
   }, [messages]);
 
-  // useEffect(() => {
-  //   if (message && selectedContact) {
-  //     startTyping(receiver?._id);
-  //     if (typingTimerOutRef.current) {
-  //       clearTimeout(typingTimerOutRef.current);
-  //     }
-  //     typingTimerOutRef.current = setTimeout(() => {
-  //       stopTyping(receiver?._id);
-  //     }, 2000);
-  //   }
-  //   return () => {
-  //     if (typingTimerOutRef.current) {
-  //       clearTimeout(typingTimerOutRef.current);
-  //     }
-  //   };
-  // }, [message, selectedContact, startTyping, stopTyping]);
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     if (!selectedContact || !message.trim()) return;
@@ -129,8 +121,7 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
       const formData = new FormData();
       formData.append("roomId", selectedContact.roomId);
       formData.append("receiverId", receiver?._id);
-      // const status = online ? "delivered" : "sent";
-      // formData.append("messageStatus", status);
+
       if (message.trim()) {
         formData.append("content", message.trim());
       }
@@ -208,23 +199,17 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
     return (
       <div className="flex-1 flex flex-col items-center justify-center mx-auto h-screen text-center">
         <div className="max-w-md ">
-          {/* <img src={whatsappImage} alt="chat-app" className=""w-full h-auto/> */}
           <h2 className={`text-3xl font-semibold mb-4`}>
             select a conversation to start chating.
           </h2>
           <p className="mb-6">
             Choose a contact from the list on the left to began messaging
           </p>
-          <p className="text-sm mt-8 flex items-center justify-center">
-            YOur personal messages are end-to-end encrypted
-          </p>
-          {/* inside src ther is image folder import the whatshap from there */}
         </div>
       </div>
     );
   }
 
-  // when the contact is selected
   return (
     <div className="flex-1 h-screen w-full flex flex-col">
       <div
@@ -232,9 +217,15 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
       >
         <button
           className="mr-2 focus:outline"
-          onClick={() => setSelectedContact(null)}
+          onClick={() => {
+            setSelectedContact(null);
+            useChatStore.setState({
+              currentConversation: null,
+              messages: [],
+            });
+          }}
         >
-          <FaArrowLeft className="" />
+          <FaArrowLeft />
         </button>
         <img
           src={receiver?.avatar}
@@ -243,9 +234,7 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
         />
 
         <div className="ml-3 flex flex-col grow">
-          <h2 className="font-semibold">
-            {receiver?.userName || "Loading..."}
-          </h2>
+          <h2 className="font-semibold">{receiver?.userName}</h2>
 
           {isTyping ? (
             <div className="text-sm">Typing...</div>
@@ -253,8 +242,6 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
             <p
               className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}
             >
-              {/* check is user online */}
-              {/* {isUserOnline */}
               {online
                 ? "Online"
                 : lastseen

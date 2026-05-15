@@ -149,11 +149,14 @@ const inilizeSocket = (server) => {
         });
       }, 3000);
 
-      io.to(receiverId).emit("user_typing", {
-        userId,
-        conversationId,
-        isTyping: true,
-      });
+      const receiverSocketId = onlineUsers.get(receiverId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("user_typing", {
+          userId,
+          conversationId,
+          isTyping: true,
+        });
+      }
     });
 
     /* ---------------- TYPING STOP ---------------- */
@@ -169,12 +172,15 @@ const inilizeSocket = (server) => {
           delete userTyping[`${conversationId}_timeout`];
         }
       }
+      const receiverSocketId = onlineUsers.get(receiverId);
 
-      io.to(receiverId).emit("user_typing", {
-        userId,
-        conversationId,
-        isTyping: false,
-      });
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("user_typing", {
+          userId,
+          conversationId,
+          isTyping: false,
+        });
+      }
     });
 
     /* ---------------- DISCONNECT ---------------- */

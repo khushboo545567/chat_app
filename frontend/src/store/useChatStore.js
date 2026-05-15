@@ -12,6 +12,7 @@ const useChatStore = create((set, get) => ({
   messages: [],
   loading: false,
   error: null,
+  currentUser: null,
 
   // userId -> { isOnline, lastSeen }
   onlineUsers: new Map(),
@@ -50,8 +51,8 @@ const useChatStore = create((set, get) => ({
     /* ================= RECEIVE MESSAGE ================= */
 
     socket.on("receive_message", (message) => {
-      const { currentConversation, currentUser } = get();
-
+      const { currentConversation } = get();
+      const currentUser = useUserStore.getState().user;
       // add message to UI
       if (currentConversation === message.roomId) {
         set((state) => ({
@@ -97,11 +98,15 @@ const useChatStore = create((set, get) => ({
     });
 
     /* ================= MESSAGE READ ================= */
+
     socket.on("message_status_updated", ({ messageId, status }) => {
       set((state) => ({
-        messages: state.messages.map((msg) =>
-          msg._id === messageId ? { ...msg, status } : msg,
-        ),
+        messages: state.messages.map((msg) => {
+          if (msg._id === messageId || msg.tempId === messageId) {
+            return { ...msg, status };
+          }
+          return msg;
+        }),
       }));
     });
 
@@ -236,7 +241,7 @@ const useChatStore = create((set, get) => ({
         loading: false,
       });
 
-      await get().MarkMsgsAsRead();
+      // await get().MarkMsgsAsRead();
     } catch (error) {
       set({
         error: error.response ? error.response.data : error.message,
@@ -332,8 +337,9 @@ const useChatStore = create((set, get) => ({
       throw error;
     }
   },
+
   MarkMsgsAsRead: async () => {
-    const { messages, currentUser } = get();
+    const { messages, currentUser, currentConversation } = get();
 
     if (!messages.length || !currentUser) {
       return;
@@ -341,7 +347,10 @@ const useChatStore = create((set, get) => ({
 
     const unreadIds = messages
       .filter(
-        (msg) => msg.status !== "read" && msg.receiver?._id === currentUser._id,
+        (msg) =>
+          msg.status !== "read" &&
+          msg.receiver?._id === currentUser._id &&
+          msg.roomId === currentConversation,
       )
       .map((msg) => msg._id);
 
