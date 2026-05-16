@@ -146,6 +146,30 @@ const useChatStore = create((set, get) => ({
       }));
     });
 
+    // socket.on("message_deleted", ({ messageId, roomId, lastMessage }) => {
+    //   set((state) => {
+    //     const updatedMessages = state.messages.filter(
+    //       (msg) => msg._id !== messageId,
+    //     );
+
+    //     const updatedConversations = state.conversations.map((conv) =>
+    //       conv._id === roomId
+    //         ? {
+    //             ...conv,
+    //             lastMessage,
+    //           }
+    //         : conv,
+    //     );
+
+    //     return {
+    //       messages: updatedMessages,
+    //       conversations: updatedConversations,
+    //     };
+    //   });
+    // });
+
+    // ======== HANDLING ANY ERROR WHILE SENDING MSG ========
+
     socket.on("message_deleted", ({ messageId, roomId, lastMessage }) => {
       set((state) => {
         const updatedMessages = state.messages.filter(
@@ -153,7 +177,7 @@ const useChatStore = create((set, get) => ({
         );
 
         const updatedConversations = state.conversations.map((conv) =>
-          conv._id === roomId
+          conv.roomId === roomId
             ? {
                 ...conv,
                 lastMessage,
@@ -168,7 +192,6 @@ const useChatStore = create((set, get) => ({
       });
     });
 
-    // ======== HANDLING ANY ERROR WHILE SENDING MSG ========
     socket.on("message_error", (error) => {
       console.error("message error", error);
     });
@@ -454,15 +477,56 @@ const useChatStore = create((set, get) => ({
     }
   },
 
+  // deleteMessage: async (messageId) => {
+  //   try {
+  //     set((state) => ({
+  //       messages: state.messages?.filter((msg) => msg?._id !== messageId),
+  //     }));
+
+  //     const response = await axiosInstance.delete(
+  //       `/message/delete-message/${messageId}`,
+  //     );
+  //     return true;
+  //   } catch (error) {
+  //     console.error("error deleting message", error);
+
+  //     set({
+  //       error: error.response?.data?.message || error.message,
+  //     });
+
+  //     return false;
+  //   }
+  // },
+
+  // ===========TYPING START===================
+
   deleteMessage: async (messageId) => {
     try {
+      const { messages, conversations } = get();
+
+      const messageToDelete = messages.find((msg) => msg._id === messageId);
+
+      if (!messageToDelete) return false;
+
+      // optimistic UI update
       set((state) => ({
-        messages: state.messages?.filter((msg) => msg?._id !== messageId),
+        messages: state.messages.filter((msg) => msg._id !== messageId),
       }));
 
       const response = await axiosInstance.delete(
         `/message/delete-message/${messageId}`,
       );
+
+      const socket = getSocket();
+
+      if (socket) {
+        socket.emit("delete_message", {
+          messageId,
+          roomId: messageToDelete.roomId,
+          receiverId: messageToDelete.receiver?._id,
+        });
+      }
+
       return true;
     } catch (error) {
       console.error("error deleting message", error);
@@ -475,7 +539,6 @@ const useChatStore = create((set, get) => ({
     }
   },
 
-  // ===========TYPING START===================
   startTyping: (receiverId) => {
     const { currentConversation } = get();
     const socket = getSocket();

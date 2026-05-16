@@ -102,6 +102,30 @@ const inilizeSocket = (server) => {
       }
     });
 
+    // ------------- DELETE MSG ------------------
+
+    socket.on("delete_message", async ({ messageId, roomId, receiverId }) => {
+      try {
+        // get latest last message
+        const lastMessage = await Message.findOne({
+          roomId,
+          _id: { $ne: messageId },
+        }).sort({ createdAt: -1 });
+
+        const receiverSocketId = onlineUsers.get(receiverId);
+
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("message_deleted", {
+            messageId,
+            roomId,
+            lastMessage,
+          });
+        }
+      } catch (err) {
+        console.error("delete_message socket error:", err);
+      }
+    });
+
     /* ---------------- MESSAGE READ ---------------- */
     socket.on("message_read", async ({ messageIds, senderId }) => {
       try {
