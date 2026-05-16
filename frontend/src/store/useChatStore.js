@@ -60,7 +60,10 @@ const useChatStore = create((set, get) => ({
         }));
 
         // instantly mark as read
-        if (message.receiver?._id === currentUser?._id) {
+        if (
+          message.receiver?._id === currentUser?._id &&
+          currentConversation === message.roomId
+        ) {
           const socket = getSocket();
 
           // update local state immediately
@@ -79,13 +82,30 @@ const useChatStore = create((set, get) => ({
       }
 
       // update conversation last message
-      set((state) => ({
-        conversations: state.conversations.map((conv) =>
+      set((state) => {
+        const updatedConversations = state.conversations.map((conv) =>
           conv.roomId === message.roomId
-            ? { ...conv, lastMessage: message }
+            ? {
+                ...conv,
+                lastMessage: {
+                  ...message,
+                  createdAt: message.createdAt || new Date().toISOString(),
+                },
+              }
             : conv,
-        ),
-      }));
+        );
+
+        // latest chat on top
+        updatedConversations.sort(
+          (a, b) =>
+            new Date(b.lastMessage?.createdAt || 0) -
+            new Date(a.lastMessage?.createdAt || 0),
+        );
+
+        return {
+          conversations: updatedConversations,
+        };
+      });
     });
 
     /* ================= MESSAGE STATUS (sent/delivered) = */
@@ -101,16 +121,30 @@ const useChatStore = create((set, get) => ({
 
     socket.on("message_status_updated", ({ messageId, status }) => {
       set((state) => ({
-        messages: state.messages.map((msg) => {
-          if (msg._id === messageId || msg.tempId === messageId) {
-            return { ...msg, status };
+        messages: state.messages.map((msg) =>
+          msg._id === messageId || msg.tempId === messageId
+            ? { ...msg, status }
+            : msg,
+        ),
+
+        conversations: state.conversations.map((conv) => {
+          if (
+            conv.lastMessage?._id === messageId ||
+            conv.lastMessage?.tempId === messageId
+          ) {
+            return {
+              ...conv,
+              lastMessage: {
+                ...conv.lastMessage,
+                status,
+              },
+            };
           }
-          return msg;
+
+          return conv;
         }),
       }));
     });
-
-    // ==================DELETE MSG=======================
 
     socket.on("message_deleted", ({ messageId, roomId, lastMessage }) => {
       set((state) => {
@@ -166,7 +200,6 @@ const useChatStore = create((set, get) => ({
         const onlineUsers = new Map(state.onlineUsers);
 
         onlineUsers.set(userId, { isOnline, lastSeen });
-        console.log(onlineUsers);
         return { onlineUsers };
       });
     });
@@ -241,7 +274,9 @@ const useChatStore = create((set, get) => ({
         loading: false,
       });
 
-      // await get().MarkMsgsAsRead();
+      requestAnimationFrame(() => {
+        get().MarkMsgsAsRead();
+      });
     } catch (error) {
       set({
         error: error.response ? error.response.data : error.message,
@@ -263,7 +298,7 @@ const useChatStore = create((set, get) => ({
     const status = formData.get("messageStatus");
 
     const { conversations } = get();
-
+    console.log(conversations);
     let roomId = null;
 
     //  Find existing conversation
@@ -275,7 +310,8 @@ const useChatStore = create((set, get) => ({
       );
 
       if (conversation) {
-        roomId = conversation._id;
+        // roomId = conversation._id;
+        roomId = conversation.roomId;
       }
     }
 
@@ -289,6 +325,7 @@ const useChatStore = create((set, get) => ({
 
     const optimisticMessage = {
       _id: tempId,
+      tempId,
       sender: { _id: senderId },
       receiver: { _id: receiverId },
       roomId,
@@ -304,9 +341,27 @@ const useChatStore = create((set, get) => ({
       status: "sent",
     };
 
-    set((state) => ({
-      messages: [...state.messages, optimisticMessage],
-    }));
+    set((state) => {
+      const updatedConversations = state.conversations.map((conv) =>
+        conv.roomId === roomId
+          ? {
+              ...conv,
+              lastMessage: optimisticMessage,
+            }
+          : conv,
+      );
+
+      updatedConversations.sort(
+        (a, b) =>
+          new Date(b.lastMessage?.createdAt || 0) -
+          new Date(a.lastMessage?.createdAt || 0),
+      );
+
+      return {
+        messages: [...state.messages, optimisticMessage],
+        conversations: updatedConversations,
+      };
+    });
 
     try {
       const { data } = await axiosInstance.post("message/send-msg", formData, {
@@ -321,11 +376,29 @@ const useChatStore = create((set, get) => ({
       }
 
       // Replace temp message
-      set((state) => ({
-        messages: state.messages.map((msg) =>
-          msg._id === tempId ? messageData : msg,
-        ),
-      }));
+      set((state) => {
+        const updatedConversations = state.conversations.map((conv) => {
+          if (conv.roomId === roomId) {
+            return {
+              ...conv,
+              lastMessage:
+                conv.lastMessage?._id === tempId
+                  ? messageData
+                  : conv.lastMessage,
+            };
+          }
+
+          return conv;
+        });
+
+        return {
+          messages: state.messages.map((msg) =>
+            msg._id === tempId ? messageData : msg,
+          ),
+          conversations: updatedConversations,
+        };
+      });
+
       return messageData;
     } catch (error) {
       set((state) => ({
@@ -341,22 +414,22 @@ const useChatStore = create((set, get) => ({
   MarkMsgsAsRead: async () => {
     const { messages, currentUser, currentConversation } = get();
 
-    if (!messages.length || !currentUser) {
+    if (!messages.length || !currentUser || !currentConversation) {
       return;
     }
 
-    const unreadIds = messages
-      .filter(
-        (msg) =>
-          msg.status !== "read" &&
-          msg.receiver?._id === currentUser._id &&
-          msg.roomId === currentConversation,
-      )
-      .map((msg) => msg._id);
+    const unreadMessages = messages.filter(
+      (msg) =>
+        msg.status !== "read" &&
+        msg.receiver?._id === currentUser._id &&
+        msg.roomId === currentConversation,
+    );
 
-    if (unreadIds.length === 0) {
+    if (unreadMessages.length === 0) {
       return;
     }
+
+    const unreadIds = unreadMessages.map((msg) => msg._id);
 
     try {
       set((state) => ({
@@ -368,9 +441,12 @@ const useChatStore = create((set, get) => ({
       const socket = getSocket();
 
       if (socket) {
+        // get actual sender from unread msgs
+        const senderId = unreadMessages[0]?.sender?._id;
+
         socket.emit("message_read", {
           messageIds: unreadIds,
-          senderId: messages[0]?.sender?._id,
+          senderId,
         });
       }
     } catch (error) {
@@ -380,8 +456,6 @@ const useChatStore = create((set, get) => ({
 
   deleteMessage: async (messageId) => {
     try {
-      await axiosInstance.delete(`/message/delete-message/${messageId}`);
-
       set((state) => ({
         messages: state.messages?.filter((msg) => msg?._id !== messageId),
       }));

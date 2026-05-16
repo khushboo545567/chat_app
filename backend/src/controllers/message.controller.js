@@ -146,7 +146,7 @@ const getConversation = asyncHandler(async (req, res) => {
             messageType: room.lastMessage.messageType,
             sender: room.lastMessage.sender,
             status: room.lastMessage.status,
-            time: room.lastMessage.createdAt,
+            createdAt: room.lastMessage.createdAt,
           }
         : null,
     };

@@ -74,14 +74,6 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
   };
 
   useEffect(() => {
-    if (!selectedContact?.roomId || !messages.length) {
-      return;
-    }
-
-    MarkMsgsAsRead();
-  }, [messages]);
-
-  useEffect(() => {
     scrollToBottom();
   }, [messages]);
 

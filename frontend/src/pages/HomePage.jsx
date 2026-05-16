@@ -14,7 +14,7 @@ const Home = () => {
     };
 
     fetchData();
-  }, [messages]);
+  }, []);
 
   return (
     <Layout>

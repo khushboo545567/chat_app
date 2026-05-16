@@ -5,32 +5,56 @@ import useLayoutStore from "../../store/useLayoutStore";
 import useThemeStore from "../../store/useThemeStore";
 import useUserStore from "../../store/useUserStore";
 
-const ChatList = ({ contacts }) => {
+const ChatList = ({ contacts = [] }) => {
   const { setSelectedContact, selectedContact } = useLayoutStore();
   const { theme } = useThemeStore();
   const { user } = useUserStore();
 
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredContacts = contacts.filter((c) =>
-    c.userName?.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
+  // ===== FORMAT TIME SAFELY =====
   const formatTime = (time) => {
-    return new Date(time).toLocaleTimeString([], {
+    if (!time) return "";
+
+    const date = new Date(time);
+
+    if (isNaN(date.getTime())) {
+      return "";
+    }
+
+    return date.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
     });
   };
 
-  return (
-    <div className="h-screen border-r border-gray-400">
-      <div className="p-4 font-semibold text-xl">Chats</div>
+  // ===== FILTER CONTACTS =====
+  const filteredContacts = contacts.filter((contact) => {
+    const otherUser = contact.participants?.find(
+      (p) => p._id.toString() !== user?._id.toString(),
+    );
 
-      <div className="relative p-2">
+    if (!otherUser) return false;
+
+    return otherUser.userName?.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  return (
+    <div
+      className={`h-screen border-r ${
+        theme === "dark"
+          ? "bg-[#111b21] border-gray-700 text-white"
+          : "bg-white border-gray-300 text-black"
+      }`}
+    >
+      {/* ===== HEADER ===== */}
+      <div className="p-4 font-semibold text-2xl">Chats</div>
+
+      {/* ===== SEARCH ===== */}
+      <div className="relative p-3">
         <FaSearch
-          className={`absolute left-4 top-1/2 -translate-y-1/2 ${
+          className={`absolute left-6 top-1/2 -translate-y-1/2 ${
             theme === "dark" ? "text-gray-400" : "text-gray-500"
           }`}
         />
@@ -40,100 +64,95 @@ const ChatList = ({ contacts }) => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search or start new chat"
-          className={`w-full pl-10 pr-4 py-2 pb-4 rounded-lg text-sm outline-none
+          className={`w-full pl-10 pr-4 py-2 rounded-lg text-sm outline-none
             ${
               theme === "dark"
-                ? "bg-gray-800 text-white placeholder-gray-400 focus:ring-green-400"
+                ? "bg-[#202c33] text-white placeholder-gray-400 focus:ring-green-500"
                 : "bg-gray-100 text-black placeholder-gray-500 focus:ring-green-500"
             }
-            focus:ring-2
-          `}
+            focus:ring-2`}
         />
       </div>
 
+      {/* ===== CHAT LIST ===== */}
       <div className="overflow-y-auto">
-        {filteredContacts.map((contact) => (
-          <motion.div
-            key={contact._id}
-            onClick={() => setSelectedContact(contact)}
-            className={`p-3 cursor-pointer flex items-center gap-3 ${
-              selectedContact?._id === contact._id
-                ? "bg-gray-200"
-                : "hover:bg-gray-100"
-            }`}
-          >
-            {/* Avatar */}
-            <img
-              src={contact.avatar}
-              alt={contact.userName}
-              className="w-10 h-10 rounded-full object-cover"
-            />
+        {filteredContacts.length === 0 ? (
+          <div className="text-center text-gray-500 mt-10">No chats found</div>
+        ) : (
+          filteredContacts.map((chat) => {
+            const otherUser = chat.participants?.find(
+              (p) => p._id.toString() !== user?._id.toString(),
+            );
 
-            {/* Name & Status */}
-            <div className="flex-1">
-              <div className="font-semibold">{contact.userName}</div>
-              <div className="flex items-center justify-between">
-                {/* Last message OR Online/Offline */}
-                <div className="text-xs text-gray-500 truncate max-w-40">
-                  {contact.lastMessage
-                    ? contact.lastMessage
-                    : contact.isOnline
-                      ? "Online"
-                      : "Offline"}
-                </div>
+            if (!otherUser) return null;
 
-                {/* Unread count (future-ready) */}
-                {contact.unreadCount > 0 && (
-                  <div className="ml-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
-                    {contact.unreadCount}
+            return (
+              <motion.div
+                key={chat.roomId}
+                whileHover={{ scale: 1.01 }}
+                onClick={() => setSelectedContact(chat)}
+                className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all
+                  ${
+                    selectedContact?.roomId === chat.roomId
+                      ? theme === "dark"
+                        ? "bg-[#2a3942]"
+                        : "bg-gray-200"
+                      : theme === "dark"
+                        ? "hover:bg-[#202c33]"
+                        : "hover:bg-gray-100"
+                  }
+                `}
+              >
+                {/* ===== AVATAR ===== */}
+                <img
+                  src={otherUser.avatar}
+                  alt={otherUser.userName}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+
+                {/* ===== MESSAGE INFO ===== */}
+                <div className="flex-1 min-w-0">
+                  {/* TOP */}
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-semibold truncate">
+                      {otherUser.userName}
+                    </h2>
+
+                    <span
+                      className={`text-xs ${
+                        theme === "dark" ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
+                      {chat.lastMessage?.createdAt
+                        ? formatTime(chat.lastMessage.createdAt)
+                        : ""}
+                    </span>
                   </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        ))}
+
+                  {/* BOTTOM */}
+                  <div className="flex items-center justify-between mt-1">
+                    <p
+                      className={`text-sm truncate max-w-45
+                        ${
+                          theme === "dark" ? "text-gray-400" : "text-gray-600"
+                        }`}
+                    >
+                      {chat.lastMessage?.content || "No messages yet"}
+                    </p>
+
+                    {/* ===== UNREAD COUNT ===== */}
+                    {chat.unreadCount > 0 && (
+                      <span className="bg-green-500 text-white text-xs rounded-full px-2 py-0.5">
+                        {chat.unreadCount}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })
+        )}
       </div>
-
-      {contacts.map((userList) => {
-        const userr = userList.participants.find(
-          (u) => u._id.toString() !== user._id.toString(),
-        );
-
-        if (!userr) return null;
-
-        return (
-          <div
-            className=" px-6 flex gap-6 items-center cursor-pointer rounded-2xl"
-            onClick={() => setSelectedContact(userList)}
-            key={userList.roomId}
-          >
-            <div>
-              <img
-                src={userr.avatar}
-                alt="user photo"
-                className="rounded-full w-12 h-12"
-              />
-            </div>
-            <div className="w-full">
-              <div className="flex justify-between">
-                <span className="font-semibold">{userr.userName}</span>
-                <span className="text-sm text-gray-600 truncate ">
-                  {formatTime(userList.lastMessage?.time)}
-                </span>
-              </div>
-
-              <div className="flex justify-between pt-1">
-                <span className="text-sm text-gray-600 truncate ">
-                  {userList.lastMessage?.content}
-                </span>
-                <span className="bg-green-500 text-white text-xs rounded-full px-2 py-0.5">
-                  {0}
-                </span>
-              </div>
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 };

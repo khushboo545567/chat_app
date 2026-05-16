@@ -5,6 +5,9 @@ const userSchema = new mongoose.Schema(
     userName: {
       type: String,
       trim: true,
+      minlength: 2,
+      maxlength: 30,
+      default: "User",
     },
 
     phoneNumber: {
@@ -22,12 +25,11 @@ const userSchema = new mongoose.Schema(
       sparse: true,
       unique: true,
       lowercase: true,
-
       match: [/^\S+@\S+\.\S+$/, "Invalid email address"],
     },
 
     emailOtp: {
-      type: String, // preferably hashed
+      type: String,
     },
 
     emailOtpExpiry: {
@@ -36,11 +38,13 @@ const userSchema = new mongoose.Schema(
 
     avatar: {
       type: String,
+      default: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
     },
 
     about: {
       type: String,
       maxlength: 150,
+      default: "Hey there! I am using ChatApp.",
     },
 
     lastSeen: {
@@ -61,12 +65,23 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
     contacts: {
       type: [
         {
-          user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-          nickname: String,
-          blocked: { type: Boolean, default: false },
+          user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+
+          nickname: {
+            type: String,
+          },
+
+          blocked: {
+            type: Boolean,
+            default: false,
+          },
         },
       ],
       default: [],
