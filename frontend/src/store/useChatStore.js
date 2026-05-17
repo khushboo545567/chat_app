@@ -83,17 +83,28 @@ const useChatStore = create((set, get) => ({
 
       // update conversation last message
       set((state) => {
-        const updatedConversations = state.conversations.map((conv) =>
-          conv.roomId === message.roomId
-            ? {
-                ...conv,
-                lastMessage: {
-                  ...message,
-                  createdAt: message.createdAt || new Date().toISOString(),
-                },
-              }
-            : conv,
-        );
+        const updatedConversations = state.conversations.map((conv) => {
+          if (conv.roomId?.toString() === message.roomId?.toString()) {
+            const isCurrentChatOpen =
+              state.currentConversation === message.roomId;
+
+            return {
+              ...conv,
+
+              lastMessage: {
+                ...message,
+                createdAt: message.createdAt || new Date().toISOString(),
+              },
+
+              unreadCount:
+                !isCurrentChatOpen && message.receiver?._id === currentUser?._id
+                  ? (conv.unreadCount || 0) + 1
+                  : conv.unreadCount || 0,
+            };
+          }
+
+          return conv;
+        });
 
         // latest chat on top
         updatedConversations.sort(
@@ -114,6 +125,23 @@ const useChatStore = create((set, get) => ({
         messages: state.messages.map((msg) =>
           msg._id === messageId ? { ...msg, status } : msg,
         ),
+
+        conversations: state.conversations.map((conv) => {
+          if (
+            conv.lastMessage?._id === messageId ||
+            conv.lastMessage?.tempId === messageId
+          ) {
+            return {
+              ...conv,
+              lastMessage: {
+                ...conv.lastMessage,
+                status,
+              },
+            };
+          }
+
+          return conv;
+        }),
       }));
     });
 
@@ -146,30 +174,6 @@ const useChatStore = create((set, get) => ({
       }));
     });
 
-    // socket.on("message_deleted", ({ messageId, roomId, lastMessage }) => {
-    //   set((state) => {
-    //     const updatedMessages = state.messages.filter(
-    //       (msg) => msg._id !== messageId,
-    //     );
-
-    //     const updatedConversations = state.conversations.map((conv) =>
-    //       conv._id === roomId
-    //         ? {
-    //             ...conv,
-    //             lastMessage,
-    //           }
-    //         : conv,
-    //     );
-
-    //     return {
-    //       messages: updatedMessages,
-    //       conversations: updatedConversations,
-    //     };
-    //   });
-    // });
-
-    // ======== HANDLING ANY ERROR WHILE SENDING MSG ========
-
     socket.on("message_deleted", ({ messageId, roomId, lastMessage }) => {
       set((state) => {
         const updatedMessages = state.messages.filter(
@@ -177,7 +181,7 @@ const useChatStore = create((set, get) => ({
         );
 
         const updatedConversations = state.conversations.map((conv) =>
-          conv.roomId === roomId
+          conv.roomId?.toString() === roomId?.toString()
             ? {
                 ...conv,
                 lastMessage,
@@ -296,7 +300,13 @@ const useChatStore = create((set, get) => ({
         currentConversation: roomId,
         loading: false,
       });
-
+      set((state) => ({
+        conversations: state.conversations.map((conv) =>
+          conv.roomId?.toString() === roomId?.toString()
+            ? { ...conv, unreadCount: 0 }
+            : conv,
+        ),
+      }));
       requestAnimationFrame(() => {
         get().MarkMsgsAsRead();
       });
@@ -366,7 +376,7 @@ const useChatStore = create((set, get) => ({
 
     set((state) => {
       const updatedConversations = state.conversations.map((conv) =>
-        conv.roomId === roomId
+        conv.roomId?.toString() === roomId?.toString()
           ? {
               ...conv,
               lastMessage: optimisticMessage,
@@ -401,13 +411,10 @@ const useChatStore = create((set, get) => ({
       // Replace temp message
       set((state) => {
         const updatedConversations = state.conversations.map((conv) => {
-          if (conv.roomId === roomId) {
+          if (conv.roomId?.toString() === roomId?.toString()) {
             return {
               ...conv,
-              lastMessage:
-                conv.lastMessage?._id === tempId
-                  ? messageData
-                  : conv.lastMessage,
+              lastMessage: messageData,
             };
           }
 
@@ -476,29 +483,6 @@ const useChatStore = create((set, get) => ({
       console.error("failed to mark messages as read", error);
     }
   },
-
-  // deleteMessage: async (messageId) => {
-  //   try {
-  //     set((state) => ({
-  //       messages: state.messages?.filter((msg) => msg?._id !== messageId),
-  //     }));
-
-  //     const response = await axiosInstance.delete(
-  //       `/message/delete-message/${messageId}`,
-  //     );
-  //     return true;
-  //   } catch (error) {
-  //     console.error("error deleting message", error);
-
-  //     set({
-  //       error: error.response?.data?.message || error.message,
-  //     });
-
-  //     return false;
-  //   }
-  // },
-
-  // ===========TYPING START===================
 
   deleteMessage: async (messageId) => {
     try {

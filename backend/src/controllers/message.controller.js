@@ -130,27 +130,62 @@ const getConversation = asyncHandler(async (req, res) => {
     .lean();
 
   //  Transform for frontend
-  const conversations = chatrooms.map((room) => {
-    const otherParticipants = room.participants.filter(
-      (p) => p._id.toString() !== userId,
-    );
+  // const conversations = chatrooms.map((room) => {
+  //   const otherParticipants = room.participants.filter(
+  //     (p) => p._id.toString() !== userId,
+  //   );
 
-    return {
-      roomId: room._id,
-      participants: otherParticipants,
-      isGroup: room.isGroup,
-      groupName: room.groupName || null,
-      lastMessage: room.lastMessage
-        ? {
-            content: room.lastMessage.content,
-            messageType: room.lastMessage.messageType,
-            sender: room.lastMessage.sender,
-            status: room.lastMessage.status,
-            createdAt: room.lastMessage.createdAt,
-          }
-        : null,
-    };
-  });
+  //   return {
+  //     roomId: room._id,
+  //     participants: otherParticipants,
+  //     isGroup: room.isGroup,
+  //     groupName: room.groupName || null,
+  //     lastMessage: room.lastMessage
+  //       ? {
+  //           content: room.lastMessage.content,
+  //           messageType: room.lastMessage.messageType,
+  //           sender: room.lastMessage.sender,
+  //           status: room.lastMessage.status,
+  //           createdAt: room.lastMessage.createdAt,
+  //         }
+  //       : null,
+  //   };
+  // });.
+
+  const conversations = await Promise.all(
+    chatrooms.map(async (room) => {
+      const otherParticipants = room.participants.filter(
+        (p) => p._id.toString() !== userId.toString(),
+      );
+
+      // unread messages count
+      const unreadCount = await Message.countDocuments({
+        roomId: room._id,
+        receiver: userId,
+        status: { $ne: "read" },
+      });
+
+      return {
+        // roomId: room._id,
+        roomId: room._id.toString(),
+        participants: otherParticipants,
+        isGroup: room.isGroup,
+        groupName: room.groupName || null,
+        unreadCount,
+
+        lastMessage: room.lastMessage
+          ? {
+              _id: room.lastMessage._id,
+              content: room.lastMessage.content,
+              messageType: room.lastMessage.messageType,
+              sender: room.lastMessage.sender,
+              status: room.lastMessage.status,
+              createdAt: room.lastMessage.createdAt,
+            }
+          : null,
+      };
+    }),
+  );
 
   return res
     .status(200)

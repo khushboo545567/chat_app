@@ -4,12 +4,13 @@ import { FaSearch } from "react-icons/fa";
 import useLayoutStore from "../../store/useLayoutStore";
 import useThemeStore from "../../store/useThemeStore";
 import useUserStore from "../../store/useUserStore";
+import { FaCheck, FaCheckDouble } from "react-icons/fa";
 
 const ChatList = ({ contacts = [] }) => {
   const { setSelectedContact, selectedContact } = useLayoutStore();
   const { theme } = useThemeStore();
   const { user } = useUserStore();
-
+  console.log(contacts);
   const [searchTerm, setSearchTerm] = useState("");
 
   // ===== FORMAT TIME SAFELY =====
@@ -84,6 +85,11 @@ const ChatList = ({ contacts = [] }) => {
               (p) => p._id.toString() !== user?._id.toString(),
             );
 
+            const lastMessage = chat.lastMessage;
+
+            const isUserMessage =
+              lastMessage?.sender?._id?.toString() === user?._id?.toString();
+
             if (!otherUser) return null;
 
             return (
@@ -131,14 +137,34 @@ const ChatList = ({ contacts = [] }) => {
 
                   {/* BOTTOM */}
                   <div className="flex items-center justify-between mt-1">
-                    <p
-                      className={`text-sm truncate max-w-45
-                        ${
+                    <div className="flex items-center gap-1 min-w-0">
+                      {isUserMessage && (
+                        <>
+                          {lastMessage?.status === "sent" && (
+                            <FaCheck size={12} />
+                          )}
+
+                          {lastMessage?.status === "delivered" && (
+                            <FaCheckDouble size={12} />
+                          )}
+
+                          {lastMessage?.status === "read" && (
+                            <FaCheckDouble
+                              size={12}
+                              className="text-blue-500"
+                            />
+                          )}
+                        </>
+                      )}
+
+                      <p
+                        className={`text-sm truncate max-w-45 ${
                           theme === "dark" ? "text-gray-400" : "text-gray-600"
                         }`}
-                    >
-                      {chat.lastMessage?.content || "No messages yet"}
-                    </p>
+                      >
+                        {lastMessage?.content || "No messages yet"}
+                      </p>
+                    </div>
 
                     {/* ===== UNREAD COUNT ===== */}
                     {chat.unreadCount > 0 && (
