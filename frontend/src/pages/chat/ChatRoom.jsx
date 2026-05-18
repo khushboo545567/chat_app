@@ -16,6 +16,11 @@ import {
   FaTimes,
   FaImage,
 } from "react-icons/fa";
+import {
+  getUsersForAddContacts,
+  addToContacts,
+} from "../../services/user.service.js";
+import { toast } from "react-toastify";
 
 const isValidateDate = (date) => {
   return date instanceof Date && !isNaN(date);
@@ -30,6 +35,8 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
   const messageScroll = useRef(null);
   const fileInputRef = useRef(null);
 
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [addToContactsData, setAddToContactsData] = useState([]);
   const { theme } = useThemeStore();
   const { user } = useUserStore();
 
@@ -136,6 +143,33 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
     }
   };
 
+  const handleFetchAddContacts = async () => {
+    try {
+      const data = await getUsersForAddContacts();
+
+      setAddToContactsData(data.users);
+      setShowAddContact(true);
+    } catch (error) {
+      console.error("failed to fetch the add to contacts details", error);
+    }
+  };
+
+  const handleAddToContacts = async (contactId) => {
+    try {
+      const data = await addToContacts({ contactId });
+
+      toast.success(data.message);
+
+      // remove added user from sidebar instantly
+      setAddToContactsData((prev) =>
+        prev.filter((user) => user._id !== contactId),
+      );
+      // then push this contactid to the contacts
+    } catch (error) {
+      toast.error(error.message || "Failed to add contact");
+    }
+  };
+
   const renderDateSeparator = (date) => {
     const dateObj = new Date(date);
 
@@ -189,7 +223,63 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
 
   if (!selectedContact) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center mx-auto h-screen text-center">
+      <div className="flex-1 flex flex-col items-center justify-center mx-auto h-screen text-center relative">
+        <div
+          className={`w-[320px] bg-white absolute right-0 top-0 h-full shadow-2xl transition-all duration-300 z-50 ${
+            showAddContact ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <div className="p-5 border-b flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Add Contacts</h2>
+
+            <button
+              className="bg-red-500 text-white rounded-full w-8 h-8"
+              onClick={() => setShowAddContact(false)}
+            >
+              x
+            </button>
+          </div>
+
+          <div className="overflow-y-auto h-[calc(100%-80px)] p-4">
+            {addToContactsData.length > 0 ? (
+              addToContactsData.map((contact) => (
+                <div
+                  key={contact._id}
+                  className="flex items-center justify-between mb-4 p-3 rounded-xl hover:bg-gray-100 transition"
+                >
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={contact.avatar}
+                      alt={contact.userName}
+                      className="w-14 h-14 rounded-full object-cover"
+                    />
+
+                    <div>
+                      <p className="font-semibold text-gray-800">
+                        {contact.userName}
+                      </p>
+
+                      <p className="text-sm text-gray-500 line-clamp-1">
+                        {contact.about}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded-full text-sm"
+                    onClick={() => handleAddToContacts(contact._id)}
+                  >
+                    Add
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-gray-500 mt-10">
+                No more users are tere
+              </p>
+            )}
+          </div>
+        </div>
         <div className="max-w-md ">
           <h2 className={`text-3xl font-semibold mb-4`}>
             select a conversation to start chating.
@@ -197,6 +287,12 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
           <p className="mb-6">
             Choose a contact from the list on the left to began messaging
           </p>
+          <button
+            className="bg-green-400 rounded-3xl p-4 hover:bg-green-500 cursor-pointer"
+            onClick={handleFetchAddContacts}
+          >
+            Add To Contacts
+          </button>
         </div>
       </div>
     );

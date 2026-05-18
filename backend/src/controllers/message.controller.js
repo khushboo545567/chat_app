@@ -110,6 +110,7 @@ const messageSend = asyncHandler(async (req, res) => {
 });
 
 // fetches all chatrooms where the user is a participant
+// n+1 query problem
 const getConversation = asyncHandler(async (req, res) => {
   const userId = new mongoose.Types.ObjectId(req.user.userId);
 

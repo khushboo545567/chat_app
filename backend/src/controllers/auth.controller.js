@@ -9,52 +9,6 @@ import generateToken from "../utils/generateToken.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import { Chatroom } from "../models/chatroom.model.js";
 
-// REGISTER AND LOGIN DONE
-// const sendOtp = asyncHandler(async (req, res) => {
-//   const { phoneNumber, phoneSuffix, email } = req.body;
-//   const otp = optGenerate();
-//   const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
-
-//   if (!phoneNumber && !email) {
-//     return res.status(400).json(new ApiError(400, "All fields are required"));
-//   }
-
-//   if (email) {
-//     let user = await User.findOne({ email });
-//     if (!user) {
-//       user = await User.create({ email });
-//     }
-
-//     user.emailOtp = otp;
-//     user.emailOtpExpiry = otpExpiry;
-//     await user.save();
-
-//     await sendOtpEmail(email, otp);
-
-//     return res
-//       .status(200)
-//       .json(new ApiResponse(200, user, `OTP is sent to your email ${email}`));
-//   } else {
-//     if (!phoneNumber || !phoneSuffix) {
-//       return res
-//         .status(400)
-//         .json(new ApiError(400, "Phone number and phone suffix are required"));
-//     }
-
-//     const fullNumber = `${phoneSuffix}${phoneNumber}`;
-//     let user = await User.findOne({ phoneNumber, phoneSuffix });
-//     if (!user) {
-//       user = await User.create({ phoneNumber, phoneSuffix });
-//     }
-
-//     await sendOtpToPhoneNumber(fullNumber);
-
-//     return res
-//       .status(200)
-//       .json(new ApiResponse(200, user, "OTP sent to your mobile number"));
-//   }
-// });
-
 const sendOtp = asyncHandler(async (req, res) => {
   const { phoneNumber, phoneSuffix, email } = req.body;
 
@@ -300,6 +254,32 @@ const getUserContacts = asyncHandler(async (req, res) => {
     );
 });
 
+// get all users excepts each user contacts to add contacts list
+const getUsersForAddContacts = asyncHandler(async (req, res) => {
+  const userId = req.user.userId;
+
+  // current logged in user
+  const currentUser = await User.findById(userId);
+
+  // get all contact user ids
+  const contactIds = currentUser.contacts.map((contact) =>
+    contact.user.toString(),
+  );
+
+  // also exclude current user himself
+  contactIds.push(userId.toString());
+
+  // find users NOT in contacts
+  const users = await User.find({
+    _id: { $nin: contactIds },
+  }).select("userName about avatar");
+
+  return res.status(200).json({
+    success: true,
+    users,
+  });
+});
+
 const addToContacts = asyncHandler(async (req, res) => {
   const userId = req.user.userId;
   const { contactId } = req.body;
@@ -388,4 +368,5 @@ export {
   getUserProfile,
   addToContacts,
   deleteContacts,
+  getUsersForAddContacts,
 };

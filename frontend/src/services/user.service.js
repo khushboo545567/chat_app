@@ -81,6 +81,28 @@ const getConversation = async () => {
   }
 };
 
+const getUsersForAddContacts = async () => {
+  try {
+    const response = await axiosInstance.get(
+      "/auth/get-all-users-for-add-to-contacts",
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : error.message;
+  }
+};
+
+const addToContacts = async ({ contactId }) => {
+  try {
+    const response = await axiosInstance.post("/auth/add-contacts", {
+      contactId,
+    });
+
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : error.message;
+  }
+};
 export {
   sendOtp,
   verifyOtp,
@@ -89,6 +111,8 @@ export {
   logoutUser,
   getContacts,
   getConversation,
+  getUsersForAddContacts,
+  addToContacts,
 
   // clear user
 };

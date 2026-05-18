@@ -4,6 +4,7 @@ import {
   deleteContacts,
   getUserContacts,
   getUserProfile,
+  getUsersForAddContacts,
   logOut,
   sendOtp,
   updateProfile,
@@ -32,5 +33,9 @@ router.route("/get-user-profile").get(verifyToken, getUserProfile);
 router.route("/add-contacts").post(verifyToken, addToContacts);
 
 router.route("/delete-contact").post(verifyToken, deleteContacts);
+
+router
+  .route("/get-all-users-for-add-to-contacts")
+  .get(verifyToken, getUsersForAddContacts);
 
 export default router;
