@@ -1,4 +1,6 @@
 import { User } from "../models/user.model.js";
+import mongoose from "mongoose";
+import { Message } from "../models/message.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import optGenerate from "../utils/otpGenerator.js";
 import { ApiError } from "../utils/apiError.js";
@@ -194,64 +196,129 @@ const getUserProfile = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "user profile fetched successfully "));
 });
 
-// get the connected users profile
 const getUserContacts = asyncHandler(async (req, res) => {
-  const userId = req.user.userId;
+  const userId = new mongoose.Types.ObjectId(req.user.userId);
 
-  // 1. Get user with contacts
+  // Get user contacts
   const user = await User.findById(userId)
-    .populate("contacts.user", "userName avatar isOnline lastSeen")
+    .populate({
+      path: "contacts.user",
+      select: "userName avatar isOnline lastSeen",
+    })
     .lean();
 
   if (!user) {
     return res.status(404).json(new ApiError(404, "User not found"));
   }
 
-  // 2. Process contacts
-  const contactsWithLastMsg = await Promise.all(
-    user.contacts.map(async (contact) => {
-      const contactId = contact.user._id;
+  const contactIds = user.contacts.map((c) => c.user._id);
 
-      // 3. Find chatroom between users
-      const room = await Chatroom.findOne({
-        participants: { $all: [userId, contactId] },
-        isGroup: false,
-      })
-        .populate({
-          path: "lastMessage",
-          select: "content messageType sender status createdAt",
-        })
-        .lean();
+  // Fetch all private chatrooms in ONE query
+  const chatrooms = await Chatroom.find({
+    participants: userId,
+    isGroup: false,
+  })
+    .populate({
+      path: "participants",
+      select: "userName avatar isOnline lastSeen",
+    })
+    .populate({
+      path: "lastMessage",
+      select: "content messageType sender status createdAt",
+      populate: {
+        path: "sender",
+        select: "userName avatar",
+      },
+    })
+    .lean();
 
-      return {
-        _id: contact.user._id,
-        userName: contact.user.userName,
-        avatar: contact.user.avatar,
-        isOnline: contact.user.isOnline,
-        lastSeen: contact.user.lastSeen,
-        blocked: contact.blocked,
-        lastMessage: room?.lastMessage
-          ? {
-              content: room.lastMessage.content,
-              messageType: room.lastMessage.messageType,
-              sender: room.lastMessage.sender,
-              status: room.lastMessage.status,
-              time: room.lastMessage.createdAt,
-            }
-          : null,
-      };
-    }),
-  );
+  // Create room map by contactId
+  const roomMap = new Map();
+
+  chatrooms.forEach((room) => {
+    const otherParticipant = room.participants.find(
+      (p) => p._id.toString() !== userId.toString(),
+    );
+
+    if (otherParticipant) {
+      roomMap.set(otherParticipant._id.toString(), room);
+    }
+  });
+
+  // Fetch unread counts in ONE aggregation query
+  const unreadCounts = await Message.aggregate([
+    {
+      $match: {
+        receiver: userId,
+        status: { $ne: "read" },
+      },
+    },
+    {
+      $group: {
+        _id: "$roomId",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const unreadMap = new Map();
+
+  unreadCounts.forEach((item) => {
+    unreadMap.set(item._id.toString(), item.count);
+  });
+
+  // Build final response
+  const contacts = user.contacts.map((contact) => {
+    const contactUser = contact.user;
+
+    const room = roomMap.get(contactUser._id.toString());
+
+    return {
+      roomId: room?._id?.toString() || null,
+
+      participants: room
+        ? room.participants.filter(
+            (p) => p._id.toString() !== userId.toString(),
+          )
+        : [contactUser],
+
+      isGroup: false,
+
+      groupName: null,
+
+      unreadCount: room ? unreadMap.get(room._id.toString()) || 0 : 0,
+
+      blocked: contact.blocked,
+
+      lastMessage: room?.lastMessage
+        ? {
+            _id: room.lastMessage._id,
+            content: room.lastMessage.content,
+            messageType: room.lastMessage.messageType,
+            sender: room.lastMessage.sender,
+            status: room.lastMessage.status,
+            createdAt: room.lastMessage.createdAt,
+          }
+        : null,
+    };
+  });
+
+  // Sort latest message first
+  contacts.sort((a, b) => {
+    const aTime = a.lastMessage?.createdAt
+      ? new Date(a.lastMessage.createdAt)
+      : 0;
+
+    const bTime = b.lastMessage?.createdAt
+      ? new Date(b.lastMessage.createdAt)
+      : 0;
+
+    return bTime - aTime;
+  });
 
   return res
     .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        contactsWithLastMsg,
-        "Contacts fetched successfully",
-      ),
-    );
+    .json(new ApiResponse(200, contacts, "Contacts fetched successfully"));
 });
 
 // get all users excepts each user contacts to add contacts list
@@ -279,7 +346,7 @@ const getUsersForAddContacts = asyncHandler(async (req, res) => {
     users,
   });
 });
-
+// add to contacts here if a added b and then in b contact a should be added in my case so implement that as well
 const addToContacts = asyncHandler(async (req, res) => {
   const userId = req.user.userId;
   const { contactId } = req.body;
@@ -307,6 +374,19 @@ const addToContacts = asyncHandler(async (req, res) => {
 
   if (alreadyExists) {
     return res.status(400).json(new ApiError(400, "Contact already exists"));
+  }
+
+  let room = await Chatroom.findOne({
+    participants: { $all: [userId, contactId] },
+    isGroup: false,
+  });
+
+  if (!room) {
+    room = await Chatroom.create({
+      participants: [userId, contactId],
+      isGroup: false,
+      createdBy: userId,
+    });
   }
 
   //  Push contact

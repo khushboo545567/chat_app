@@ -7,7 +7,6 @@ const userSchema = new mongoose.Schema(
       trim: true,
       minlength: 2,
       maxlength: 30,
-      default: "User",
     },
 
     phoneNumber: {
@@ -38,7 +37,6 @@ const userSchema = new mongoose.Schema(
 
     avatar: {
       type: String,
-      default: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
     },
 
     about: {

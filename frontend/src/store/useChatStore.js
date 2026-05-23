@@ -2,9 +2,23 @@ import { create } from "zustand";
 import { getSocket } from "../services/chat.service";
 import axiosInstance from "../services/url.service";
 import { Socket } from "socket.io-client";
-import { getConversation } from "../services/user.service";
+import { getUserContacts } from "../services/user.service";
 import useLayoutStore from "./useLayoutStore";
 import useUserStore from "./useUserStore";
+
+const updateSelectedContact = (updatedConversations) => {
+  const { selectedContact, setSelectedContact } = useLayoutStore.getState();
+
+  if (!selectedContact) return;
+
+  const updatedSelectedContact = updatedConversations.find(
+    (conv) => conv.roomId?.toString() === selectedContact?.roomId?.toString(),
+  );
+
+  if (updatedSelectedContact) {
+    setSelectedContact(updatedSelectedContact);
+  }
+};
 
 const useChatStore = create((set, get) => ({
   conversations: [],
@@ -54,7 +68,7 @@ const useChatStore = create((set, get) => ({
       const { currentConversation } = get();
       const currentUser = useUserStore.getState().user;
       // add message to UI
-      if (currentConversation === message.roomId) {
+      if (currentConversation?.toString() === message.roomId?.toString()) {
         set((state) => ({
           messages: [...state.messages, message],
         }));
@@ -62,7 +76,7 @@ const useChatStore = create((set, get) => ({
         // instantly mark as read
         if (
           message.receiver?._id === currentUser?._id &&
-          currentConversation === message.roomId
+          currentConversation?.toString() === message.roomId?.toString()
         ) {
           const socket = getSocket();
 
@@ -112,7 +126,7 @@ const useChatStore = create((set, get) => ({
             new Date(b.lastMessage?.createdAt || 0) -
             new Date(a.lastMessage?.createdAt || 0),
         );
-
+        updateSelectedContact(updatedConversations);
         return {
           conversations: updatedConversations,
         };
@@ -188,6 +202,7 @@ const useChatStore = create((set, get) => ({
               }
             : conv,
         );
+        updateSelectedContact(updatedConversations);
 
         return {
           messages: updatedMessages,
@@ -266,10 +281,10 @@ const useChatStore = create((set, get) => ({
 
   // FETCH CONVERTATION
 
-  getConversations: async () => {
+  getUserContact: async () => {
     set({ loading: true, error: null });
     try {
-      const result = await getConversation();
+      const result = await getUserContacts();
       if (result?.statuscode === 200) {
         set({ conversations: result.data || [], loading: false });
       }
@@ -331,19 +346,16 @@ const useChatStore = create((set, get) => ({
     const status = formData.get("messageStatus");
 
     const { conversations } = get();
-    console.log(conversations);
+
     let roomId = null;
 
-    //  Find existing conversation
+    // Find existing conversation
     if (conversations?.length > 0) {
-      const conversation = conversations.find(
-        (conv) =>
-          conv.participants.some((p) => p._id === senderId) &&
-          conv.participants.some((p) => p._id === receiverId),
+      const conversation = conversations.find((conv) =>
+        conv.participants.some((p) => p._id === receiverId),
       );
 
       if (conversation) {
-        // roomId = conversation._id;
         roomId = conversation.roomId;
       }
     }
@@ -373,7 +385,7 @@ const useChatStore = create((set, get) => ({
       createdAt: new Date().toISOString(),
       status: "sent",
     };
-
+    console.log(optimisticMessage);
     set((state) => {
       const updatedConversations = state.conversations.map((conv) =>
         conv.roomId?.toString() === roomId?.toString()
@@ -389,6 +401,7 @@ const useChatStore = create((set, get) => ({
           new Date(b.lastMessage?.createdAt || 0) -
           new Date(a.lastMessage?.createdAt || 0),
       );
+      updateSelectedContact(updatedConversations);
 
       return {
         messages: [...state.messages, optimisticMessage],
@@ -408,7 +421,6 @@ const useChatStore = create((set, get) => ({
         socket.emit("send_message", messageData);
       }
 
-      // Replace temp message
       set((state) => {
         const updatedConversations = state.conversations.map((conv) => {
           if (conv.roomId?.toString() === roomId?.toString()) {
@@ -420,6 +432,8 @@ const useChatStore = create((set, get) => ({
 
           return conv;
         });
+        updateSelectedContact(updatedConversations);
+        console.log("conversatsion after message send ", conversations);
 
         return {
           messages: state.messages.map((msg) =>
@@ -486,21 +500,45 @@ const useChatStore = create((set, get) => ({
 
   deleteMessage: async (messageId) => {
     try {
-      const { messages, conversations } = get();
+      const { messages } = get();
 
       const messageToDelete = messages.find((msg) => msg._id === messageId);
 
       if (!messageToDelete) return false;
 
-      // optimistic UI update
-      set((state) => ({
-        messages: state.messages.filter((msg) => msg._id !== messageId),
-      }));
+      await axiosInstance.delete(`/message/delete-message/${messageId}`);
 
-      const response = await axiosInstance.delete(
-        `/message/delete-message/${messageId}`,
-      );
+      //  UPDATE UI  AFTER SUCCESS
+      set((state) => {
+        const updatedMessages = state.messages.filter(
+          (msg) => msg._id !== messageId,
+        );
 
+        const roomMessages = updatedMessages.filter(
+          (msg) =>
+            msg.roomId?.toString() === messageToDelete.roomId?.toString(),
+        );
+
+        const newLastMessage = roomMessages[roomMessages.length - 1] || null;
+
+        const updatedConversations = state.conversations.map((conv) =>
+          conv.roomId?.toString() === messageToDelete.roomId?.toString()
+            ? {
+                ...conv,
+                lastMessage: newLastMessage,
+              }
+            : conv,
+        );
+
+        updateSelectedContact(updatedConversations);
+
+        return {
+          messages: updatedMessages,
+          conversations: updatedConversations,
+        };
+      });
+
+      // 3. SOCKET EVENT
       const socket = getSocket();
 
       if (socket) {

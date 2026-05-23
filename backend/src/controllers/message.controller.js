@@ -109,92 +109,6 @@ const messageSend = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, populatedMessage, "Message sent successfully"));
 });
 
-// fetches all chatrooms where the user is a participant
-// n+1 query problem
-const getConversation = asyncHandler(async (req, res) => {
-  const userId = new mongoose.Types.ObjectId(req.user.userId);
-
-  //  Find all chatrooms for this user
-  const chatrooms = await Chatroom.find({
-    participants: userId,
-  })
-    .populate({
-      path: "participants",
-      select: "userName avatar isOnline lastSeen",
-    })
-    .populate({
-      path: "lastMessage",
-      select: "content messageType sender status createdAt",
-      populate: { path: "sender", select: "userName avatar" },
-    })
-    .sort({ "lastMessage.createdAt": -1 }) // most recent first
-    .lean();
-
-  //  Transform for frontend
-  // const conversations = chatrooms.map((room) => {
-  //   const otherParticipants = room.participants.filter(
-  //     (p) => p._id.toString() !== userId,
-  //   );
-
-  //   return {
-  //     roomId: room._id,
-  //     participants: otherParticipants,
-  //     isGroup: room.isGroup,
-  //     groupName: room.groupName || null,
-  //     lastMessage: room.lastMessage
-  //       ? {
-  //           content: room.lastMessage.content,
-  //           messageType: room.lastMessage.messageType,
-  //           sender: room.lastMessage.sender,
-  //           status: room.lastMessage.status,
-  //           createdAt: room.lastMessage.createdAt,
-  //         }
-  //       : null,
-  //   };
-  // });.
-
-  const conversations = await Promise.all(
-    chatrooms.map(async (room) => {
-      const otherParticipants = room.participants.filter(
-        (p) => p._id.toString() !== userId.toString(),
-      );
-
-      // unread messages count
-      const unreadCount = await Message.countDocuments({
-        roomId: room._id,
-        receiver: userId,
-        status: { $ne: "read" },
-      });
-
-      return {
-        // roomId: room._id,
-        roomId: room._id.toString(),
-        participants: otherParticipants,
-        isGroup: room.isGroup,
-        groupName: room.groupName || null,
-        unreadCount,
-
-        lastMessage: room.lastMessage
-          ? {
-              _id: room.lastMessage._id,
-              content: room.lastMessage.content,
-              messageType: room.lastMessage.messageType,
-              sender: room.lastMessage.sender,
-              status: room.lastMessage.status,
-              createdAt: room.lastMessage.createdAt,
-            }
-          : null,
-      };
-    }),
-  );
-
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, conversations, "Conversations fetched successfully"),
-    );
-});
-
 // get the messages of the particular user
 const getMessages = asyncHandler(async (req, res) => {
   const { receiverId } = req.params;
@@ -336,4 +250,4 @@ const deleteMsg = asyncHandler(async (req, res) => {
   );
 });
 
-export { messageSend, getMessages, markAsRead, deleteMsg, getConversation };
+export { messageSend, getMessages, markAsRead, deleteMsg };

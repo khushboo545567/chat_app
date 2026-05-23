@@ -71,10 +71,9 @@ const getContacts = async () => {
   }
 };
 
-const getConversation = async () => {
+const getUserContacts = async () => {
   try {
-    const response = await axiosInstance.get("/message/get-conversation");
-
+    const response = await axiosInstance.get("auth/get-users");
     return response.data;
   } catch (error) {
     console.log(error);
@@ -110,7 +109,7 @@ export {
   checkUserAuth,
   logoutUser,
   getContacts,
-  getConversation,
+  getUserContacts,
   getUsersForAddContacts,
   addToContacts,
 

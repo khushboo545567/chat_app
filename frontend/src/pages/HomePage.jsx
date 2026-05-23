@@ -6,11 +6,12 @@ import { getContacts } from "../services/user.service.js";
 import useChatStore from "../store/useChatStore.js";
 
 const Home = () => {
-  const { getConversations, conversations, messages } = useChatStore();
+  const conversations = useChatStore((state) => state.conversations);
+  const getUserContact = useChatStore((state) => state.getUserContact);
 
   useEffect(() => {
     const fetchData = async () => {
-      await getConversations();
+      await getUserContact();
     };
 
     fetchData();

@@ -3,7 +3,6 @@ import verifyToken from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 import {
   deleteMsg,
-  getConversation,
   getMessages,
   markAsRead,
   messageSend,
@@ -13,7 +12,7 @@ const router = Router();
 router
   .route("/send-msg")
   .post(verifyToken, upload.single("image"), messageSend);
-router.route("/get-conversation").get(verifyToken, getConversation);
+
 router.route("/get-messages/:receiverId").get(verifyToken, getMessages);
 router.route("/mark-as-read/:roomId").get(verifyToken, markAsRead);
 router.route("/delete-message/:messageId").delete(verifyToken, deleteMsg);

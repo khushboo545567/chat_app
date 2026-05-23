@@ -53,11 +53,15 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
     getUserLastseen,
     cleanup,
     deleteMessage,
-    conversations,
     MarkMsgsAsRead,
+    getUserContact,
   } = useChatStore();
 
+  const conversations = useChatStore((state) => state.conversations);
+
   // GET ONLINE STATUS AND LAST SEEN ===========
+
+  // ================
   const receiver =
     selectedContact?.participants?.find((p) => p._id !== user?._id) || null;
 
@@ -67,6 +71,7 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
 
   useEffect(() => {
     if (selectedContact?.roomId) {
+      // if (selectedContact) {
       const receiver = selectedContact.participants.find(
         (r) => r._id !== user._id,
       );
@@ -111,11 +116,11 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
     }
   };
 
-  // send message
   const handleSendMessage = async () => {
-    if (!selectedContact) return;
-    setFilePreview(null);
-
+    if (!selectedContact?.roomId) {
+      toast.error("Room not available");
+      return;
+    }
     try {
       const formData = new FormData();
       formData.append("roomId", selectedContact.roomId);
@@ -164,7 +169,8 @@ const ChatRoom = ({ selectedContact, setSelectedContact }) => {
       setAddToContactsData((prev) =>
         prev.filter((user) => user._id !== contactId),
       );
-      // then push this contactid to the contacts
+
+      await getUserContact();
     } catch (error) {
       toast.error(error.message || "Failed to add contact");
     }

@@ -5,12 +5,14 @@ import useLayoutStore from "../../store/useLayoutStore";
 import useThemeStore from "../../store/useThemeStore";
 import useUserStore from "../../store/useUserStore";
 import { FaCheck, FaCheckDouble } from "react-icons/fa";
+import useChatStore from "../../store/useChatStore";
 
 const ChatList = ({ contacts = [] }) => {
   const { setSelectedContact, selectedContact } = useLayoutStore();
+
   const { theme } = useThemeStore();
   const { user } = useUserStore();
-  console.log(contacts);
+
   const [searchTerm, setSearchTerm] = useState("");
 
   // ===== FORMAT TIME SAFELY =====
