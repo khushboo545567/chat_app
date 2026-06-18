@@ -1,6 +1,6 @@
 #  Real-Time Chat Application
 
-A full-stack real-time chat application that enables users to connect and communicate instantly. The application provides secure authentication using Email OTP and Phone OTP verification, contact management, one-to-one messaging, media sharing, message notifications, typing indicators, and read receipts.
+A full-stack real-time chat application designed to provide a seamless messaging experience. Users can securely authenticate using Email or Phone OTP, manage contacts, exchange messages and media in real time, receive instant notifications, view typing indicators, and track message delivery through read receipts.
 
 ---
 
@@ -12,7 +12,6 @@ A full-stack real-time chat application that enables users to connect and commun
 - Login and registration using Phone OTP
 - Secure OTP verification
 - Protected routes
-- User session management
 - Authentication and authorization implemented throughout the application
 
 ###  User Management
@@ -27,7 +26,6 @@ A full-stack real-time chat application that enables users to connect and commun
 
 - One-to-one messaging
 - Instant message delivery using Socket.IO
-- Real-time communication
 - Typing indicators
 - Read receipts (Mark as Read)
 - Online/Offline user status
@@ -36,8 +34,7 @@ A full-stack real-time chat application that enables users to connect and commun
 
 - Send and receive images
 - Share media files in conversations
-- Real-time media delivery
-
+- 
 ###  Notifications
 
 - Real-time message notifications
@@ -89,6 +86,3 @@ A full-stack real-time chat application that enables users to connect and commun
 10. Images and media can be shared within conversations.
 
 ---
-**Rekha**
-
-⭐ If you found this project useful, please consider giving it a star on GitHub!
